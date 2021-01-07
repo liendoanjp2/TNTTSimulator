@@ -11,7 +11,7 @@ public class PlayerMovement : MonoBehaviour
     private float rollingMoveSpeed = 2f; // Adds 2 movespeed to currMovespeed
     public Rigidbody2D rigidbody;
     public Animator animator;
-    public Transform transform;
+    private Transform transform;
 
     private const float leftDirection = -1f;
     private const float rightDirection = 1f;
@@ -25,6 +25,14 @@ public class PlayerMovement : MonoBehaviour
     private const int rollCooldown = 0; // 3 seconds
 
     private bool shouldRoll = false;
+
+    void Start()
+    {
+        transform = gameObject.GetComponent<Transform>();
+        if (transform == null)
+            throw new System.Exception("transform null");
+    }
+
     // Update is called once per frame
     void Update()
     {
@@ -57,8 +65,8 @@ public class PlayerMovement : MonoBehaviour
         }
 
         // deaccelerate until its zero
-        velocity.x *= 0.833f;
-        velocity.y *= 0.833f;
+        velocity.x *= 0.93f;
+        velocity.y *= 0.93f;
 
 
         if (Input.GetKeyDown("q"))
@@ -125,12 +133,12 @@ public class PlayerMovement : MonoBehaviour
                 if (movement != Vector2.zero)
                 {
                     // Take movement get the vector and add force
-                    velocity = new Vector2(movement.x, movement.y).normalized;
+                    velocity = new Vector2(movement.x, movement.y).normalized * rollingMoveSpeed;
                 }
                 else
                 {
                     // Roll in direction you are facing
-                    velocity = transform.right;
+                    velocity = transform.right * rollingMoveSpeed;
                 }
                 print("ROLLED");
                 currMoveSpeed = Mathf.Clamp(currMoveSpeed + rollingMoveSpeed, minMoveSpeed, maxMoveSpeed);
