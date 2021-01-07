@@ -4,7 +4,11 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
-    public float moveSpeed = 5f;
+    private float minMoveSpeed = 2f;
+    private float maxMoveSpeed = 6f;
+    private float currMoveSpeed = 2f;
+    private float runningMoveSpeed = 4.5f;
+    private float rollingMoveSpeed = 2f; // Adds 2 movespeed to currMovespeed
     public Rigidbody2D rigidbody;
     public Animator animator;
     public Transform transform;
@@ -19,6 +23,8 @@ public class PlayerMovement : MonoBehaviour
     private Vector2 velocity = Vector2.zero;
     private float timeSinceLastRolled = 0;
     private const int rollCooldown = 0; // 3 seconds
+
+    private bool shouldRoll = false;
     // Update is called once per frame
     void Update()
     {
@@ -40,6 +46,20 @@ public class PlayerMovement : MonoBehaviour
         float moveY = Input.GetAxisRaw("Vertical");
 
         movement = new Vector2(moveX, moveY).normalized; // Fix diagonal speed
+
+        if(moveX != 0 || moveY != 0)
+        {
+            currMoveSpeed = Mathf.Clamp(currMoveSpeed + Time.deltaTime * 2, minMoveSpeed, maxMoveSpeed);
+        }
+        else
+        {
+            currMoveSpeed = Mathf.Clamp(currMoveSpeed - Time.deltaTime * 8, minMoveSpeed, maxMoveSpeed);
+        }
+
+        // deaccelerate until its zero
+        velocity.x *= 0.833f;
+        velocity.y *= 0.833f;
+
 
         if (Input.GetKeyDown("q"))
         {
@@ -67,6 +87,13 @@ public class PlayerMovement : MonoBehaviour
         animator.SetFloat("Vertical", movement.y);
         animator.SetFloat("Speed", movement.sqrMagnitude);
         animator.SetFloat("Direction", directionFacing);
+        animator.SetBool("isRunning", currMoveSpeed > runningMoveSpeed);
+
+        if (shouldRoll)
+        {
+            animator.Play("Player_Roll");
+            shouldRoll = false;
+        }
     }
 
     void Move()
@@ -76,24 +103,18 @@ public class PlayerMovement : MonoBehaviour
             // Turn left
             transform.rotation = transform.rotation * Quaternion.Euler(0, 180f, 0);
             directionFacing = leftDirection;
-            print("hello");
         }
         else if(directionFacing == leftDirection && movement.x > 0)
         {
             // Turn right
             transform.rotation = transform.rotation * Quaternion.Euler(0, -180f, 0);
             directionFacing = rightDirection;
-            print("hello2");
-        }
+        }        
 
-        // Decrease until zero
-        // deaccelerate until its zero
-        //print(velocity.x);
-        velocity.x /= 2;
-        velocity.y /= 2;
+        Vector2 baseMovement = (rigidbody.position + movement * currMoveSpeed * Time.fixedDeltaTime);
 
         // Movement
-        rigidbody.MovePosition((rigidbody.position + movement * moveSpeed * Time.fixedDeltaTime) + velocity);
+        rigidbody.MovePosition(baseMovement + velocity);
         
         if (keyPresses.Count > 0)
         {
@@ -105,14 +126,15 @@ public class PlayerMovement : MonoBehaviour
                 {
                     // Take movement get the vector and add force
                     velocity = new Vector2(movement.x, movement.y).normalized;
-                    print("MOVING");
                 }
                 else
                 {
                     // Roll in direction you are facing
                     velocity = transform.right;
-                    print("MOVING");
                 }
+                print("ROLLED");
+                currMoveSpeed = Mathf.Clamp(currMoveSpeed + rollingMoveSpeed, minMoveSpeed, maxMoveSpeed);
+                shouldRoll = true;
                 timeSinceLastRolled = Time.fixedTime;
             }
             else if (Input.GetKeyDown("w"))

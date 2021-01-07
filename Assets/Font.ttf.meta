@@ -1,0 +1,23 @@
+fileFormatVersion: 2
+guid: 90da87133e8c19342b00ee9b222abbf6
+TrueTypeFontImporter:
+  externalObjects: {}
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontName: m6x11
+  fontNames:
+  - m6x11
+  fallbackFontReferences:
+  - {fileID: 12800000, guid: 04ab10332b2e0044db7b50decacd32fc, type: 3}
+  customCharacters: 
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  useLegacyBoundsCalculation: 0
+  shouldRoundAdvanceValue: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
