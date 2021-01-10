@@ -33,7 +33,19 @@ public class PlayerMovement : MonoBehaviour
 
     enum STATE
     {
-        NORMAL, ROLLING
+        NORMAL, ROLLING, DIGGING
+    }
+
+    private IEnumerator DigCoroutine()
+    {
+        playerState = STATE.DIGGING;
+        movement = Vector2.zero;
+        //TODO: fix this, we shouldn't have to make a new object everytime
+        ObjectRaycast objectRaycast = new ObjectRaycast();
+        objectRaycast.doShovelingAction(gameObject);
+
+        yield return new WaitForSeconds(animator.GetCurrentAnimatorStateInfo(0).length + animator.GetCurrentAnimatorStateInfo(0).normalizedTime);
+        playerState = STATE.NORMAL;
     }
 
 
@@ -95,16 +107,17 @@ public class PlayerMovement : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-
-        ProcessInputs();
-
-        ProcessAnimations();
-
+        if (playerState != STATE.DIGGING)
+        {
+            ProcessInputs();
+            ProcessAnimations();
+        }
     }
 
     void FixedUpdate()
     {
-        Move();
+
+         Move();
     }
 
     void ProcessInputs()
@@ -144,6 +157,7 @@ public class PlayerMovement : MonoBehaviour
         {
             // interact
             print("e down");
+            keyPresses.Add("e");
         }
 
     }
@@ -198,10 +212,11 @@ public class PlayerMovement : MonoBehaviour
                 // Jump
                 print("W down");
             }
-            else if (Input.GetKeyDown("e"))
+            else if (keyPress.Equals("e"))
             {
                 // interact
                 print("e down");
+                StartCoroutine(DigCoroutine());
             }
         }
 
