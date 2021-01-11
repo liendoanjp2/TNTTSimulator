@@ -28,26 +28,33 @@ public class PlayerMovement : MonoBehaviour
     // Dodge variables
     float rollDistance = 5f;
 
-    private Coroutine _dodging;
+    private GameObject playerInteractableGameObject; // Gameobj Player is currently interacting with
 
+    private HighlightController highlightController;
 
-    enum STATE
+    public enum STATE
     {
-        NORMAL, ROLLING, DIGGING
+        NORMAL, INTERACTING
     }
 
-    private IEnumerator DigCoroutine()
+    public void setPlayerState(STATE state)
     {
-        playerState = STATE.DIGGING;
-        movement = Vector2.zero;
-        //TODO: fix this, we shouldn't have to make a new object everytime
-        ObjectRaycast objectRaycast = new ObjectRaycast();
-        objectRaycast.doShovelingAction(gameObject);
+        playerState = state;
+    }
 
-        yield return new WaitForSeconds(animator.GetCurrentAnimatorStateInfo(0).length + animator.GetCurrentAnimatorStateInfo(0).normalizedTime);
+    public GameObject getPlayerInteractableGameObject()
+    {
+        return playerInteractableGameObject;
+    }
+
+    public void onAnimationFinish()
+    {
+        Interactable interactable = playerInteractableGameObject.GetComponent<Interactable>();
+        interactable.onFinishInteract();
+        playerInteractableGameObject = null;
         playerState = STATE.NORMAL;
+        Debug.Log("Done");
     }
-
 
     private IEnumerator DodgeCoroutine()
     {
@@ -55,27 +62,39 @@ public class PlayerMovement : MonoBehaviour
         var rigidbody = GetComponent<Rigidbody2D>();
         var transform = GetComponent<Transform>();
         var boxCollider = GetComponent<BoxCollider2D>();
-        Vector2 characterBoxDim = boxCollider.size;
 
+        Vector2 characterBoxDim = boxCollider.size;
         Vector2 distanceAbleToDodge = Vector2.one * rollDistance;
 
-        RaycastHit2D hitX = Physics2D.Raycast(transform.position, transform.right, rollDistance);
-        if (hitX.collider != null)
+        // Moving left or right, check in front to see how far we can roll
+        if(movement.x != 0)
         {
-            distanceAbleToDodge.x = hitX.distance - characterBoxDim.x / 2;
+            RaycastHit2D hitX = Physics2D.Raycast(transform.position, transform.right, rollDistance);
+            if (hitX && hitX.collider != null && !hitX.collider.isTrigger)
+            {
+                distanceAbleToDodge.x = hitX.distance - characterBoxDim.x / 2;
+            }
+        }
+        // Moving up, check above to see how far we can roll
+        if(movement.y > 0)
+        {
+            RaycastHit2D hitYUp = Physics2D.Raycast(transform.position, transform.up, rollDistance);
+            if (hitYUp && hitYUp.collider != null && !hitYUp.collider.isTrigger)
+            {
+                distanceAbleToDodge.y = hitYUp.distance - characterBoxDim.y / 2;
+            }
+        }
+        // Moving down, check below to see how far we can roll
+        else if(movement.y < 0)
+        {
+            RaycastHit2D hitYDown = Physics2D.Raycast(transform.position, -transform.up, rollDistance);
+            if (hitYDown && hitYDown.collider != null && !hitYDown.collider.isTrigger)
+            {
+                distanceAbleToDodge.y = hitYDown.distance - characterBoxDim.y / 2;
+            }
         }
 
-        RaycastHit2D hitYUp = Physics2D.Raycast(transform.position, transform.up, rollDistance);
-        if (hitYUp.collider != null)
-        {
-            distanceAbleToDodge.y = hitYUp.distance - characterBoxDim.y / 2;
-        }
-
-        RaycastHit2D hitYDown = Physics2D.Raycast(transform.position, -transform.up, rollDistance);
-        if (hitYDown.collider != null)
-        {
-            distanceAbleToDodge.y = hitYDown.distance - characterBoxDim.y / 2;
-        }
+        Debug.Log(distanceAbleToDodge);
 
         Vector3 dodgePosition = rigidbody.position + movement.normalized * distanceAbleToDodge;
 
@@ -86,15 +105,13 @@ public class PlayerMovement : MonoBehaviour
 
         print(distanceAbleToDodge + "" + dodgePosition);
 
-        playerState = STATE.ROLLING;
-
+        animator.Play("Player_Roll");
         iTween.MoveTo(gameObject, iTween.Hash("position", dodgePosition, "time", 0.2f, "easeType", "easeInOutExpo", "oncomplete", "onDodgeComplete"));
 
         // Increase character movespeed
         currMoveSpeed = Mathf.Clamp(currMoveSpeed + rollingMoveSpeed, minMoveSpeed, maxMoveSpeed);
         yield return endOfFrame;
 
-        _dodging = null;
     }
 
     void Start()
@@ -102,22 +119,35 @@ public class PlayerMovement : MonoBehaviour
         transform = gameObject.GetComponent<Transform>();
         if (transform == null)
             throw new System.Exception("transform null");
+        highlightController = gameObject.GetComponent<HighlightController>();
+        if (highlightController == null)
+            throw new System.Exception("highlightController null");
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (playerState != STATE.DIGGING)
+        if (playerState == STATE.NORMAL)
         {
             ProcessInputs();
             ProcessAnimations();
         }
+        else if(playerState == STATE.INTERACTING)
+        {
+            movement = Vector2.zero;
+            currMoveSpeed = minMoveSpeed;
+        }        
     }
 
     void FixedUpdate()
     {
-
-         Move();
+        Move();
+        RaycastHit2D hitYUp = Physics2D.Raycast(transform.position, transform.up, rollDistance);
+        if (hitYUp)
+        {
+            Debug.DrawRay(rigidbody.position, Vector2.up * hitYUp.distance, Color.red);
+        }
+        
     }
 
     void ProcessInputs()
@@ -169,12 +199,6 @@ public class PlayerMovement : MonoBehaviour
         animator.SetFloat("Speed", movement.sqrMagnitude);
         animator.SetFloat("Direction", directionFacing);
         animator.SetBool("isRunning", currMoveSpeed > runningMoveSpeed);
-
-        if (playerState == STATE.ROLLING)
-        {
-            animator.Play("Player_Roll");
-            playerState = STATE.NORMAL;
-        }
     }
 
     void Move()
@@ -185,18 +209,18 @@ public class PlayerMovement : MonoBehaviour
             transform.rotation = transform.rotation * Quaternion.Euler(0, 180f, 0);
             directionFacing = leftDirection;
         }
-        else if(directionFacing == leftDirection && movement.x > 0)
+        else if (directionFacing == leftDirection && movement.x > 0)
         {
             // Turn right
             transform.rotation = transform.rotation * Quaternion.Euler(0, -180f, 0);
             directionFacing = rightDirection;
-        }        
+        }
 
         Vector2 baseMovement = (rigidbody.position + movement * currMoveSpeed * Time.fixedDeltaTime);
 
         // Movement
         rigidbody.MovePosition(baseMovement);
-        
+
         if (keyPresses.Count > 0)
         {
             string keyPress = keyPresses[0];
@@ -204,7 +228,7 @@ public class PlayerMovement : MonoBehaviour
             if (keyPress.Equals("q") && Time.fixedTime - timeSinceLastRolled > rollCooldown)
             {
                 print("ROLLED");
-                _dodging = StartCoroutine(DodgeCoroutine());
+                StartCoroutine(DodgeCoroutine());
                 timeSinceLastRolled = Time.fixedTime;
             }
             else if (Input.GetKeyDown("w"))
@@ -216,11 +240,23 @@ public class PlayerMovement : MonoBehaviour
             {
                 // interact
                 print("e down");
-                StartCoroutine(DigCoroutine());
+                Interact();
             }
         }
-
-
-
+    }
+    private void Interact() { 
+        Collider2D farthestCollider = highlightController.getFarthestCollider();
+        if (farthestCollider)
+        {
+            Interactable hit = farthestCollider.GetComponent<Interactable>();
+            if (hit != null)
+            {
+                playerInteractableGameObject = farthestCollider.gameObject;
+                hit.Interact(this);
+                return;
+            }
+        }
     }
 }
+
+

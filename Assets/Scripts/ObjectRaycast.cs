@@ -14,7 +14,7 @@ public class ObjectRaycast : MonoBehaviour
 
     public void doShovelingAction(GameObject playerGameObject)
     {
-        
+
 
         Transform playerTransform = playerGameObject.transform;
         Vector3 playerPosition = playerTransform.position;
