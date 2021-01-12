@@ -57,7 +57,6 @@ public class HighlightController : MonoBehaviour
             Interactable hit = farthestCollider.GetComponent<Interactable>();
             if (hit != null)
             {
-                // hit.HighlightSomethingUIIDK_Philips_come_up_with_a_beter_name(ref to UI)
                 Highlight(farthestCollider.gameObject);
                 return;
             }

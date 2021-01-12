@@ -31,11 +31,10 @@ public class PlayerMovement : MonoBehaviour
     private GameObject playerInteractableGameObject; // Gameobj Player is currently interacting with
 
     private HighlightController highlightController;
-    private SceneController sceneController;
 
     public enum STATE
     {
-        NORMAL, INTERACTING, STOP
+        NORMAL, INTERACTING
     }
 
     public void setPlayerState(STATE state)
@@ -123,9 +122,6 @@ public class PlayerMovement : MonoBehaviour
         highlightController = gameObject.GetComponent<HighlightController>();
         if (highlightController == null)
             throw new System.Exception("highlightController null");
-        sceneController = gameObject.GetComponent<SceneController>();
-        if (sceneController == null)
-            throw new System.Exception("sceneController null");
     }
 
     // Update is called once per frame
@@ -136,12 +132,11 @@ public class PlayerMovement : MonoBehaviour
             ProcessInputs();
             ProcessAnimations();
         }
-        else if(playerState == STATE.INTERACTING || playerState == STATE.STOP)
+        else if(playerState == STATE.INTERACTING)
         {
             movement = Vector2.zero;
             currMoveSpeed = minMoveSpeed;
-            ProcessAnimations();
-        }
+        }        
     }
 
     void FixedUpdate()
@@ -260,15 +255,6 @@ public class PlayerMovement : MonoBehaviour
                 hit.Interact(this);
                 return;
             }
-        }
-    }
-
-    private void OnCollisionEnter2D(Collision2D collision)
-    {
-        Debug.Log("oncollisionenter2d: " + collision.gameObject.name);
-        Minigame minigame = collision.gameObject.GetComponent<Minigame>();
-        if (minigame != null) {
-            minigame.load(sceneController);
         }
     }
 }

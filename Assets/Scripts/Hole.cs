@@ -55,7 +55,6 @@ public class Hole : MonoBehaviour, Interactable
 
 public interface Interactable
 {
-    // void betternameforhighlighting();
     void Interact(PlayerMovement player);
     void onFinishInteract();
 }
