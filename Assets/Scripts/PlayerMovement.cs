@@ -4,119 +4,42 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
+    // Constants
     private float minMoveSpeed = 2f;
     private float maxMoveSpeed = 6f;
-    private float currMoveSpeed = 2f;
-    private float runningMoveSpeed = 4.5f;
-    private float rollingMoveSpeed = 2f; // Adds 2 movespeed to currMovespeed
-    public Rigidbody2D rigidbody;
-    public Animator animator;
-    private Transform transform;
-    private STATE playerState = STATE.NORMAL;
+    public float runningMoveSpeed = 4.5f;
 
     private const float leftDirection = -1f;
     private const float rightDirection = 1f;
 
-    private Vector2 movement;
-    private float directionFacing = rightDirection;
+    // Direction + movespeed + movement
+    public float currMoveSpeed = 2f;
+    public float directionFacing = rightDirection;
+    public Vector2 movement;
+
+    // Keypresses for input
     private List<string> keyPresses = new List<string>();
 
-    private Vector2 velocity = Vector2.zero;
-    private float timeSinceLastRolled = -2;
-    private const int rollCooldown = 2; // 3 seconds
-
     // Dodge variables
-    float rollDistance = 5f;
+    private float rollingMoveSpeed = 2f; // Adds 2 movespeed to currMovespeed
+    private int rollCooldown = 2; // 3 seconds
+    private float rollDistance = 5f;
+    private float timeSinceLastRolled = -2;
 
-    private GameObject playerInteractableGameObject; // Gameobj Player is currently interacting with
-
+    // Components from player
+    new private Rigidbody2D rigidbody;
+    private AnimationController animationController;
+    new private Transform transform;
     private HighlightController highlightController;
     private SceneController sceneController;
+    private PlayerState playerState;
 
-    public enum STATE
-    {
-        NORMAL, INTERACTING, STOP
-    }
-
-    public void setPlayerState(STATE state)
-    {
-        playerState = state;
-    }
-
-    public GameObject getPlayerInteractableGameObject()
-    {
-        return playerInteractableGameObject;
-    }
-
-    public void onAnimationFinish()
-    {
-        Interactable interactable = playerInteractableGameObject.GetComponent<Interactable>();
-        interactable.onFinishInteract();
-        playerInteractableGameObject = null;
-        playerState = STATE.NORMAL;
-        Debug.Log("Done");
-    }
-
-    private IEnumerator DodgeCoroutine()
-    {
-        var endOfFrame = new WaitForEndOfFrame();
-        var rigidbody = GetComponent<Rigidbody2D>();
-        var transform = GetComponent<Transform>();
-        var boxCollider = GetComponent<BoxCollider2D>();
-
-        Vector2 characterBoxDim = boxCollider.size;
-        Vector2 distanceAbleToDodge = Vector2.one * rollDistance;
-
-        // Moving left or right, check in front to see how far we can roll
-        if(movement.x != 0)
-        {
-            RaycastHit2D hitX = Physics2D.Raycast(transform.position, transform.right, rollDistance);
-            if (hitX && hitX.collider != null && !hitX.collider.isTrigger)
-            {
-                distanceAbleToDodge.x = hitX.distance - characterBoxDim.x / 2;
-            }
-        }
-        // Moving up, check above to see how far we can roll
-        if(movement.y > 0)
-        {
-            RaycastHit2D hitYUp = Physics2D.Raycast(transform.position, transform.up, rollDistance);
-            if (hitYUp && hitYUp.collider != null && !hitYUp.collider.isTrigger)
-            {
-                distanceAbleToDodge.y = hitYUp.distance - characterBoxDim.y / 2;
-            }
-        }
-        // Moving down, check below to see how far we can roll
-        else if(movement.y < 0)
-        {
-            RaycastHit2D hitYDown = Physics2D.Raycast(transform.position, -transform.up, rollDistance);
-            if (hitYDown && hitYDown.collider != null && !hitYDown.collider.isTrigger)
-            {
-                distanceAbleToDodge.y = hitYDown.distance - characterBoxDim.y / 2;
-            }
-        }
-
-        Debug.Log(distanceAbleToDodge);
-
-        Vector3 dodgePosition = rigidbody.position + movement.normalized * distanceAbleToDodge;
-
-        if (movement == Vector2.zero)
-        {
-            dodgePosition = transform.position + transform.right.normalized * distanceAbleToDodge.x;
-        }
-
-        print(distanceAbleToDodge + "" + dodgePosition);
-
-        animator.Play("Player_Roll");
-        iTween.MoveTo(gameObject, iTween.Hash("position", dodgePosition, "time", 0.2f, "easeType", "easeInOutExpo", "oncomplete", "onDodgeComplete"));
-
-        // Increase character movespeed
-        currMoveSpeed = Mathf.Clamp(currMoveSpeed + rollingMoveSpeed, minMoveSpeed, maxMoveSpeed);
-        yield return endOfFrame;
-
-    }
 
     void Start()
     {
+        rigidbody = gameObject.GetComponent<Rigidbody2D>();
+        if (rigidbody == null)
+            throw new System.Exception("rigidbody null");
         transform = gameObject.GetComponent<Transform>();
         if (transform == null)
             throw new System.Exception("transform null");
@@ -126,21 +49,26 @@ public class PlayerMovement : MonoBehaviour
         sceneController = gameObject.GetComponent<SceneController>();
         if (sceneController == null)
             throw new System.Exception("sceneController null");
+        animationController = gameObject.GetComponent<AnimationController>();
+        if (animationController == null)
+            throw new System.Exception("animationController null");
+        playerState = gameObject.GetComponent<PlayerState>();
+        if (playerState == null)
+            throw new System.Exception("playerState null");
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (playerState == STATE.NORMAL)
+        PlayerState.STATE state = playerState.getPlayerState();
+        if (state == PlayerState.STATE.NORMAL)
         {
             ProcessInputs();
-            ProcessAnimations();
         }
-        else if(playerState == STATE.INTERACTING || playerState == STATE.STOP)
+        else if(state == PlayerState.STATE.INTERACTING || state == PlayerState.STATE.STOP)
         {
             movement = Vector2.zero;
             currMoveSpeed = minMoveSpeed;
-            ProcessAnimations();
         }
     }
 
@@ -171,11 +99,6 @@ public class PlayerMovement : MonoBehaviour
             currMoveSpeed = Mathf.Clamp(currMoveSpeed - Time.deltaTime * 8, minMoveSpeed, maxMoveSpeed);
         }
 
-        // deaccelerate until its zero
-        velocity.x *= 0.93f;
-        velocity.y *= 0.93f;
-
-
         if (Input.GetKeyDown("q"))
         {
             // Roll
@@ -195,15 +118,6 @@ public class PlayerMovement : MonoBehaviour
             keyPresses.Add("e");
         }
 
-    }
-  
-    void ProcessAnimations()
-    {
-        animator.SetFloat("Horizontal", movement.x);
-        animator.SetFloat("Vertical", movement.y);
-        animator.SetFloat("Speed", movement.sqrMagnitude);
-        animator.SetFloat("Direction", directionFacing);
-        animator.SetBool("isRunning", currMoveSpeed > runningMoveSpeed);
     }
 
     void Move()
@@ -245,20 +159,7 @@ public class PlayerMovement : MonoBehaviour
             {
                 // interact
                 print("e down");
-                Interact();
-            }
-        }
-    }
-    private void Interact() { 
-        Collider2D farthestCollider = highlightController.getFarthestCollider();
-        if (farthestCollider)
-        {
-            Interactable hit = farthestCollider.GetComponent<Interactable>();
-            if (hit != null)
-            {
-                playerInteractableGameObject = farthestCollider.gameObject;
-                hit.Interact(this);
-                return;
+                highlightController.Interact();
             }
         }
     }
@@ -270,6 +171,64 @@ public class PlayerMovement : MonoBehaviour
         if (minigame != null) {
             minigame.load(sceneController);
         }
+    }
+
+    private IEnumerator DodgeCoroutine()
+    {
+        var endOfFrame = new WaitForEndOfFrame();
+        var rigidbody = GetComponent<Rigidbody2D>();
+        var transform = GetComponent<Transform>();
+        var boxCollider = GetComponent<BoxCollider2D>();
+
+        Vector2 characterBoxDim = boxCollider.size;
+        Vector2 distanceAbleToDodge = Vector2.one * rollDistance;
+
+        // Moving left or right, check in front to see how far we can roll
+        if (movement.x != 0)
+        {
+            RaycastHit2D hitX = Physics2D.Raycast(transform.position, transform.right, rollDistance);
+            if (hitX && hitX.collider != null && !hitX.collider.isTrigger)
+            {
+                distanceAbleToDodge.x = hitX.distance - characterBoxDim.x / 2;
+            }
+        }
+        // Moving up, check above to see how far we can roll
+        if (movement.y > 0)
+        {
+            RaycastHit2D hitYUp = Physics2D.Raycast(transform.position, transform.up, rollDistance);
+            if (hitYUp && hitYUp.collider != null && !hitYUp.collider.isTrigger)
+            {
+                distanceAbleToDodge.y = hitYUp.distance - characterBoxDim.y / 2;
+            }
+        }
+        // Moving down, check below to see how far we can roll
+        else if (movement.y < 0)
+        {
+            RaycastHit2D hitYDown = Physics2D.Raycast(transform.position, -transform.up, rollDistance);
+            if (hitYDown && hitYDown.collider != null && !hitYDown.collider.isTrigger)
+            {
+                distanceAbleToDodge.y = hitYDown.distance - characterBoxDim.y / 2;
+            }
+        }
+
+        Debug.Log(distanceAbleToDodge);
+
+        Vector3 dodgePosition = rigidbody.position + movement.normalized * distanceAbleToDodge;
+
+        if (movement == Vector2.zero)
+        {
+            dodgePosition = transform.position + transform.right.normalized * distanceAbleToDodge.x;
+        }
+
+        print(distanceAbleToDodge + "" + dodgePosition);
+
+        animationController.playRoll();
+        iTween.MoveTo(gameObject, iTween.Hash("position", dodgePosition, "time", 0.2f, "easeType", "easeInOutExpo", "oncomplete", "onDodgeComplete"));
+
+        // Increase character movespeed
+        currMoveSpeed = Mathf.Clamp(currMoveSpeed + rollingMoveSpeed, minMoveSpeed, maxMoveSpeed);
+        yield return endOfFrame;
+
     }
 }
 

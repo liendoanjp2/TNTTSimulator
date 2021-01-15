@@ -40,7 +40,8 @@ public class SceneController : MonoBehaviour
     IEnumerator loadSceneCoroutine(string sceneName)
     {
         // Remove controls from player...
-        gameObject.GetComponent<PlayerMovement>().setPlayerState(PlayerMovement.STATE.STOP);
+        PlayerState playerState = gameObject.GetComponent<PlayerState>();
+        playerState.setStop();
 
         AsyncOperation sceneLoading = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Additive);
         sceneLoading.allowSceneActivation = false;
@@ -126,7 +127,7 @@ public class SceneController : MonoBehaviour
         }
 
         // Restore controls after we done
-        gameObject.GetComponent<PlayerMovement>().setPlayerState(PlayerMovement.STATE.NORMAL);
+        playerState.setNormal();
         Debug.Log("restore controls");
 
     }

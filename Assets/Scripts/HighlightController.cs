@@ -8,12 +8,15 @@ public class HighlightController : MonoBehaviour
     public GameObject reminderDig;
     GameObject currentTarget;
     Rigidbody2D playerRigidbody;
-    Transform playerTransform;
+    private GameObject GameObjectInteractingWith; // Gameobj Player is currently interacting with
+    private PlayerState playerState;
 
     private void Start()
     {
         playerRigidbody = gameObject.GetComponent<Rigidbody2D>();
-        playerTransform = gameObject.GetComponent<Transform>();
+        playerState = gameObject.GetComponent<PlayerState>();
+        if (playerState == null)
+            throw new System.Exception("playerState null");
     }
 
     private void Update()
@@ -65,9 +68,39 @@ public class HighlightController : MonoBehaviour
         Hide();
     }
 
+    public void Interact()
+    {
+        Collider2D farthestCollider = getFarthestCollider();
+        if (farthestCollider)
+        {
+            Interactable hit = farthestCollider.GetComponent<Interactable>();
+            if (hit != null)
+            {
+                GameObjectInteractingWith = farthestCollider.gameObject;
+                hit.Interact(gameObject);
+                return;
+            }
+        }
+    }
+
+    public void onFinishInteract()
+    {
+        Interactable interactable = GameObjectInteractingWith.GetComponent<Interactable>();
+        interactable.onFinishInteract();
+
+        GameObjectInteractingWith = null;
+        playerState.setNormal();
+    }
+
+
     private void ToggleDigReminder(bool toggleValue)
     {
         reminderDig.SetActive(toggleValue);
+    }
+
+    public GameObject getGameObjectInteractingWith()
+    {
+        return GameObjectInteractingWith;
     }
 
     private Collider2D[] getColliders()
@@ -106,6 +139,12 @@ public class HighlightController : MonoBehaviour
             }
         }
         return theCollider;
+    }
+
+    public void onShovelAHole()
+    {
+        SpriteRenderer holeRenderer = GameObjectInteractingWith.GetComponent<SpriteRenderer>();
+        holeRenderer.color = new Color(255, 255, 255, 255);
     }
 
 }

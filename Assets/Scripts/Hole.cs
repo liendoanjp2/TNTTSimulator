@@ -9,27 +9,27 @@ public class Hole : MonoBehaviour, Interactable
         EMPTY, HOLE, PLANTED, HARVEST
     }
 
-    private STATE holeState = STATE.EMPTY; 
+    private STATE holeState = STATE.EMPTY;
 
-    public void Interact(PlayerMovement player)
+    public void Interact(GameObject player)
     {
+        AnimationController playerAnimationController = player.GetComponent<AnimationController>();
+        PlayerState playerState = player.GetComponent<PlayerState>();
 
         switch (holeState)
         {
             case STATE.EMPTY:
                 // Set state
-                player.setPlayerState(PlayerMovement.STATE.INTERACTING);
-
-                GameObject playerGameObject = player.gameObject;
+                playerState.setInteracting();
                 print("Yo, we hit something");
 
-                Animator playerAnimator = playerGameObject.GetComponent<Animator>();
+                Animator playerAnimator = player.GetComponent<Animator>();
                 playerAnimator.Play("Player_Shovel");
                 holeState = STATE.HOLE;
                 break;
             default:
                 // No animation playing so we just call function
-                player.onAnimationFinish();
+                playerAnimationController.onAnimationFinish();
                 break;
 /*            case STATE.HOLE:
                 // Plant here
@@ -56,6 +56,6 @@ public class Hole : MonoBehaviour, Interactable
 public interface Interactable
 {
     // void betternameforhighlighting();
-    void Interact(PlayerMovement player);
+    void Interact(GameObject player);
     void onFinishInteract();
 }
