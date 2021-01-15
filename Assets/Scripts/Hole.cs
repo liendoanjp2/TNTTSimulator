@@ -6,38 +6,40 @@ public class Hole : MonoBehaviour, Interactable
 {
     private enum STATE
     {
-        EMPTY, HOLE, PLANTED, WATER
+        EMPTY, HOLE, PLANTED, HARVEST
     }
 
     private STATE holeState = STATE.EMPTY; 
 
     public void Interact(PlayerMovement player)
     {
-        GameObject playerGameObject = player.gameObject;
-        Animator playerAnimator = playerGameObject.GetComponent<Animator>();
 
         switch (holeState)
-        { 
+        {
             case STATE.EMPTY:
                 // Set state
                 player.setPlayerState(PlayerMovement.STATE.INTERACTING);
+
+                GameObject playerGameObject = player.gameObject;
+                print("Yo, we hit something");
+
+                Animator playerAnimator = playerGameObject.GetComponent<Animator>();
                 playerAnimator.Play("Player_Shovel");
                 holeState = STATE.HOLE;
-                break;
-            case STATE.HOLE:
-                player.setPlayerState(PlayerMovement.STATE.INTERACTING);
-                playerAnimator.Play("Player_Doing");
-                holeState = STATE.PLANTED;
-                break;
-            case STATE.PLANTED:
-                player.setPlayerState(PlayerMovement.STATE.INTERACTING);
-                playerAnimator.Play("Player_Water");
-                holeState = STATE.WATER;
                 break;
             default:
                 // No animation playing so we just call function
                 player.onAnimationFinish();
                 break;
+/*            case STATE.HOLE:
+                // Plant here
+                break;
+            case STATE.PLANTED:
+                // Water here
+                break;
+            case STATE.HARVEST:
+                // Harvest here
+                break;*/
         }
 
         Debug.Log("Interacted with hole!");
