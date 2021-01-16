@@ -6,7 +6,7 @@ public class Hole : MonoBehaviour, Interactable
 {
     private enum STATE
     {
-        EMPTY, HOLE, PLANTED, HARVEST
+        EMPTY, HOLE, PLANTED, WATERED
     }
 
     private STATE holeState = STATE.EMPTY;
@@ -22,25 +22,23 @@ public class Hole : MonoBehaviour, Interactable
         switch (holeState)
         {
             case STATE.EMPTY:
-                // Set state
                 playerState.setInteracting();
-                print("Yo, we hit something");
-
                 playerAnimator.Play("Player_Shovel");
+                break;
+            case STATE.HOLE:
+                playerState.setInteracting();
+                playerAnimator.Play("Player_Doing");
+                holeState = STATE.PLANTED;
+                break;
+            case STATE.PLANTED:
+                playerState.setInteracting();
+                playerAnimator.Play("Player_Water");
+                holeState = STATE.WATERED;
                 break;
             default:
                 // No animation playing so we just call function
                 playerAnimationController.onAnimationEnd();
                 break;
-/*            case STATE.HOLE:
-                // Plant here
-                break;
-            case STATE.PLANTED:
-                // Water here
-                break;
-            case STATE.HARVEST:
-                // Harvest here
-                break;*/
         }
 
         Debug.Log("Interacted with hole!");
@@ -62,20 +60,16 @@ public class Hole : MonoBehaviour, Interactable
                 holeRenderer.color = new Color(255, 255, 255, 255);
                 holeState = STATE.HOLE;
                 break;
-            default:
-                // No animation playing so we just call function
-                playerAnimationController.onAnimationEnd();
+            case InteractableAction.PLANT:
+                SpriteRenderer holeRenderer2 = gameObject.GetComponent<SpriteRenderer>();
+                holeRenderer2.color = new Color(255, 255, 255, 255);
+                holeState = STATE.PLANTED;
                 break;
-                /* 
-                case STATE.HOLE:
-                    // Plant here
-                    break;
-                case STATE.PLANTED:
-                    // Water here
-                    break;
-                case STATE.HARVEST:
-                    // Harvest here
-                    break;*/
+            case InteractableAction.WATER:
+                SpriteRenderer holeRenderer3 = gameObject.GetComponent<SpriteRenderer>();
+                holeRenderer3.color = new Color(255, 255, 255, 255);
+                holeState = STATE.WATERED;
+                break;
         }
         Debug.Log("on Finish Interact");
     }
@@ -89,7 +83,7 @@ public class Hole : MonoBehaviour, Interactable
 
 public enum InteractableAction
 {
-    NONE, DIG
+    NONE, DIG, PLANT, WATER
 };
 
 public interface Interactable
