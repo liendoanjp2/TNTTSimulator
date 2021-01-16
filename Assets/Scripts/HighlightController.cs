@@ -76,6 +76,7 @@ public class HighlightController : MonoBehaviour
             Interactable hit = farthestCollider.GetComponent<Interactable>();
             if (hit != null)
             {
+                Debug.Log("hit " + farthestCollider.gameObject.name);
                 GameObjectInteractingWith = farthestCollider.gameObject;
                 hit.Interact(gameObject);
                 return;
@@ -83,15 +84,20 @@ public class HighlightController : MonoBehaviour
         }
     }
 
-    public void onFinishInteract()
+    public void onInteractEnd(InteractableAction interactableAction)
     {
         Interactable interactable = GameObjectInteractingWith.GetComponent<Interactable>();
-        interactable.onFinishInteract();
+        interactable.onAnimationEvent(gameObject, interactableAction);
+    }
+
+    public void onAnimationComplete()
+    {
+        Interactable interactable = GameObjectInteractingWith.GetComponent<Interactable>();
+        interactable.onAnimationEnd();
 
         GameObjectInteractingWith = null;
         playerState.setNormal();
     }
-
 
     private void ToggleDigReminder(bool toggleValue)
     {

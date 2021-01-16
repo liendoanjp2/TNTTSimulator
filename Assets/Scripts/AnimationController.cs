@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -7,6 +8,7 @@ public class AnimationController : MonoBehaviour
     private PlayerMovement playerMovement;
     private Animator playerAnimator;
     private HighlightController highlightController;
+
     void Start()
     {
         playerMovement = gameObject.GetComponent<PlayerMovement>();
@@ -40,16 +42,26 @@ public class AnimationController : MonoBehaviour
         playerAnimator.Play("Player_Roll");
     }
 
-    public void onAnimationFinish()
+    public void onAnimationEnd()
     {
-        highlightController.onFinishInteract();
+        highlightController.onAnimationComplete();
         Debug.Log("Done");
     }
 
-
-    public void onShovelAnimationUp()
+    public void onAnimationEvent(AnimationEvent myEvent)
     {
-        // Animation frame where the shovel is up in the air so we can create a hole
-        highlightController.onShovelAHole();
+        string interactableActionString = myEvent.stringParameter;
+        InteractableAction interactableAction = InteractableAction.NONE;
+
+        foreach (InteractableAction action in Enum.GetValues(typeof(InteractableAction)))
+        {
+            if (action.ToString().Equals(interactableActionString))
+            {
+                interactableAction = action;
+                break;
+            }
+        }
+
+        highlightController.onInteractEnd(interactableAction);
     }
 }
