@@ -116,7 +116,7 @@ AnimationClip:
   m_HasMotionFloatCurves: 0
   m_Events:
   - time: 0.5833333
-    functionName: onShovelAnimationUp
+    functionName: onAnimationEvent
     data: DIG
     objectReferenceParameter: {fileID: 11500000, guid: bd9ebe96a56669c4a8fa5d5f1bd25332,
       type: 3}
