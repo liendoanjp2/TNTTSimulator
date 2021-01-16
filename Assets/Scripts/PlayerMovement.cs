@@ -167,7 +167,7 @@ public class PlayerMovement : MonoBehaviour
     private void OnCollisionEnter2D(Collision2D collision)
     {
         Debug.Log("oncollisionenter2d: " + collision.gameObject.name);
-        Minigame minigame = collision.gameObject.GetComponent<Minigame>();
+        SceneMinigame minigame = collision.gameObject.GetComponent<SceneMinigame>();
         if (minigame != null) {
             minigame.load(sceneController);
         }

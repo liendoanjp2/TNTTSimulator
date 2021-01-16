@@ -12,12 +12,15 @@ public class SceneController : MonoBehaviour
 
     private Dictionary<string, Vector3> spawnPoints = new Dictionary<string, Vector3>();
 
+    public static string MainSceneName = "Michael_Testing";
+    public static string ChurchSceneMinigameName = "ChurchMinigame";
+
     private void Start()
     {
         // Spawn points for main
-        spawnPoints.Add("Michael_Testing", new Vector3(0, 0, 0));
-        spawnPoints.Add("Michael_TestingToChurchMinigame", new Vector3(0, 0, 0)); // Spawnpoint after main to church
-        spawnPoints.Add("ChurchMinigameToMichael_Testing", new Vector3(-33, 31, 0)); // Spawnpoint after church to main
+        spawnPoints.Add(MainSceneName, new Vector3(0, 0, 0));
+        spawnPoints.Add(MainSceneName + "To" + ChurchSceneMinigameName, new Vector3(0, 0, 0)); // Spawnpoint after main to church
+        spawnPoints.Add(ChurchSceneMinigameName + "To" + MainSceneName, new Vector3(-33, 31, 0)); // Spawnpoint after church to main
         sceneTransition = gameObject.transform.parent.Find("PlayerUI").Find("SceneTransition").gameObject;
 
     }
@@ -32,12 +35,12 @@ public class SceneController : MonoBehaviour
         return spawnPoints[nameKey];
     }
 
-    public void loadScene(string sceneName)
+    public void loadSceneMinigame(string sceneName)
     {
-        StartCoroutine(loadSceneCoroutine(sceneName));
+        StartCoroutine(loadSceneMinigameCoroutine(sceneName));
     }
 
-    IEnumerator loadSceneCoroutine(string sceneName)
+    IEnumerator loadSceneMinigameCoroutine(string sceneName)
     {
         // Remove controls from player...
         PlayerState playerState = gameObject.GetComponent<PlayerState>();
@@ -116,6 +119,44 @@ public class SceneController : MonoBehaviour
             Debug.Log(Time.time - startTime);
         }
 
+        // Restore controls after we done
+        playerState.setNormal();
+        Debug.Log("restore controls");
+        StartCoroutine(run(sceneName));
+    }
+
+    IEnumerator run(string sceneName)
+    {
+        PlayerState playerState = gameObject.GetComponent<PlayerState>();
+        if (sceneName.Equals(MainSceneName))
+        {
+            Debug.Log("Running code for main scene");
+        }
+        else if (sceneName.Equals(ChurchSceneMinigameName))
+        {
+            playerState.setStop();
+            Debug.Log("Running code for church minigame scene");
+
+            GameObject churchUI = null;
+
+            foreach(GameObject go in Resources.FindObjectsOfTypeAll(typeof(GameObject)) as GameObject[])
+            {
+                if (go.name.Equals("ChurchUI"))
+                {
+                    churchUI = go;
+                    Debug.Log(go);
+                    go.SetActive(true);
+                }
+            }
+
+            if(churchUI != null)
+            {
+
+            }
+
+        }
+
+        Color objectColor = sceneTransition.GetComponent<Image>().color;
         // TODO FADE TO SCENE
         while (sceneTransition.GetComponent<Image>().color.a > 0)
         {
@@ -125,10 +166,6 @@ public class SceneController : MonoBehaviour
             sceneTransition.GetComponent<Image>().color = objectColor;
             yield return null;
         }
-
-        // Restore controls after we done
-        playerState.setNormal();
-        Debug.Log("restore controls");
 
     }
 

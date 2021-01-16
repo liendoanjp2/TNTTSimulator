@@ -4,6 +4,11 @@ using UnityEngine;
 
 public class MinigameController : MonoBehaviour
 {
+    // Church minigame
+    // Player cannot move, script will move player
+    // Camera will stay still.
+    // Minigame will play
+
     // Start is called before the first frame update
     void Start()
     {
