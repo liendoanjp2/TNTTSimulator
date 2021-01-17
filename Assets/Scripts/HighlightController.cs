@@ -5,7 +5,7 @@ using UnityEngine;
 public class HighlightController : MonoBehaviour
 {
     public GameObject highlighter;
-    public GameObject reminderDig;
+    public GameObject reminderInteract;
     GameObject currentTarget;
     Rigidbody2D playerRigidbody;
     private GameObject GameObjectInteractingWith; // Gameobj Player is currently interacting with
@@ -44,7 +44,7 @@ public class HighlightController : MonoBehaviour
     {
         currentTarget = null;
         highlighter.SetActive(false);
-        reminderDig.SetActive(false);
+        reminderInteract.SetActive(false);
     }
 
     private void ProcessPointer()
@@ -54,7 +54,7 @@ public class HighlightController : MonoBehaviour
         {
             if (farthestCollider.name.Contains("Hole"))
             {
-                ToggleDigReminder(true);
+                ToggleReminder(true);
             }
 
             Interactable hit = farthestCollider.GetComponent<Interactable>();
@@ -99,9 +99,9 @@ public class HighlightController : MonoBehaviour
         playerState.setNormal();
     }
 
-    private void ToggleDigReminder(bool toggleValue)
+    private void ToggleReminder(bool toggleValue)
     {
-        reminderDig.SetActive(toggleValue);
+        reminderInteract.SetActive(toggleValue);
     }
 
     public GameObject getGameObjectInteractingWith()

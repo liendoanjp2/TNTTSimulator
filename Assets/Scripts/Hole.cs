@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class Hole : MonoBehaviour, Interactable
 {
+    public GameObject plant;
+    public GameObject sacraficeExp;
+
     private enum STATE
     {
         EMPTY, HOLE, PLANTED, WATERED
@@ -61,14 +64,18 @@ public class Hole : MonoBehaviour, Interactable
                 holeState = STATE.HOLE;
                 break;
             case InteractableAction.PLANT:
-                SpriteRenderer holeRenderer2 = gameObject.GetComponent<SpriteRenderer>();
-                holeRenderer2.color = new Color(255, 255, 255, 255);
+                //Don't do anything right now. We have no UI for planted
                 holeState = STATE.PLANTED;
                 break;
             case InteractableAction.WATER:
-                SpriteRenderer holeRenderer3 = gameObject.GetComponent<SpriteRenderer>();
-                holeRenderer3.color = new Color(255, 255, 255, 255);
+                SpriteRenderer plantRenderer = plant.GetComponent<SpriteRenderer>();
+                plantRenderer.color = new Color(255, 255, 255, 255);
+                gameObject.GetComponent<BoxCollider2D>().enabled = false;
                 holeState = STATE.WATERED;
+
+                int numberOfMiniGameHoles = 5;
+                float amountOfExpPerHole = sacraficeExp.GetComponent<ExpBar>().getMaxExp() / numberOfMiniGameHoles;
+                sacraficeExp.GetComponent<ExpBar>().addExp(amountOfExpPerHole);
                 break;
         }
         Debug.Log("on Finish Interact");
