@@ -49,10 +49,16 @@ public class HighlightController : MonoBehaviour
 
     private void ProcessPointer()
     {
+
         Collider2D farthestCollider = getFarthestCollider();
         if (farthestCollider)
         {
             if (farthestCollider.name.Contains("Hole"))
+            {
+                ToggleReminder(true);
+            }
+
+            if (farthestCollider.name.Contains("Sign"))
             {
                 ToggleReminder(true);
             }
