@@ -8,10 +8,13 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/TitleScreen.unity
     guid: 50f6d4399a2df2a4394b5843b71f2275
-  - enabled: 1
-    path: Assets/Scenes/Michael_Testing.unity
-    guid: 1785550338a688f42919ca59eb714158
-  - enabled: 1
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
     path: Assets/Scenes/ChurchMinigame.unity
     guid: 9aac0b5813705704494f473328157892
+  - enabled: 1
+    path: Assets/Scenes/Philips_Testing.unity
+    guid: 0493de0e4a9879146bce8d375b66ea1f
   m_configObjects: {}

@@ -7,23 +7,28 @@ public class Sign : MonoBehaviour, Interactable
     public GameObject signTextObject;
     public GameObject actualSign;
     public string signText;
-
-    private void OnCollisionEnter2D(Collision2D collision)
-    {
-        Debug.Log("Swag");
-    }
+    private bool intereacted = false;
 
     private void OnCollisionExit2D(Collision2D collision)
     {
-        Debug.Log("Yolo");
         actualSign.SetActive(false);
+        intereacted = false;
     }
 
     public void Interact(GameObject player)
     {
-        actualSign.SetActive(true);
-        signTextObject.GetComponent<TMPro.TextMeshProUGUI>().text = signText;
-        throw new System.NotImplementedException();
+        if(!intereacted)
+        {
+            actualSign.SetActive(true);
+            intereacted = true;
+            signTextObject.GetComponent<TMPro.TextMeshProUGUI>().text = signText;
+        }
+        else
+        {
+            actualSign.SetActive(false);
+            intereacted = false;
+        }
+
     }
 
     public void onAnimationEnd()
