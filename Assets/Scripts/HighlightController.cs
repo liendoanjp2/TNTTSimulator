@@ -63,6 +63,11 @@ public class HighlightController : MonoBehaviour
                 ToggleReminder(true);
             }
 
+            if (farthestCollider.name.Contains("NPC"))
+            {
+                ToggleReminder(true);
+            }
+
             Interactable hit = farthestCollider.GetComponent<Interactable>();
             if (hit != null)
             {
