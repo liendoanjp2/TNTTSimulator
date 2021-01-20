@@ -26,6 +26,7 @@ public class NPC : MonoBehaviour, Interactable
         }
         else
         {
+            textObject.GetComponent<TMPro.TextMeshProUGUI>().text = "";
             actualSign.SetActive(false);
             intereacted = false;
         }

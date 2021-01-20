@@ -53,20 +53,7 @@ public class HighlightController : MonoBehaviour
         Collider2D farthestCollider = getFarthestCollider();
         if (farthestCollider)
         {
-            if (farthestCollider.name.Contains("Hole"))
-            {
-                ToggleReminder(true);
-            }
-
-            if (farthestCollider.name.Contains("Sign"))
-            {
-                ToggleReminder(true);
-            }
-
-            if (farthestCollider.name.Contains("NPC"))
-            {
-                ToggleReminder(true);
-            }
+            ToggleReminder(true);
 
             Interactable hit = farthestCollider.GetComponent<Interactable>();
             if (hit != null)

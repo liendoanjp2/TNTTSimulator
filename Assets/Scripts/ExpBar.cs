@@ -25,7 +25,7 @@ public class ExpBar : MonoBehaviour
 
     public float getMaxExp()
     {
-        return maxExp;
+        return maxExp - .26f;
     }
 
 }
