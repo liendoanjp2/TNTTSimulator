@@ -34,6 +34,7 @@ public class PlayerMovement : MonoBehaviour
     private SceneController sceneController;
     private PlayerState playerState;
 
+    private Coroutine moveToRoutine;
 
     void Start()
     {
@@ -70,11 +71,19 @@ public class PlayerMovement : MonoBehaviour
             movement = Vector2.zero;
             currMoveSpeed = minMoveSpeed;
         }
+        else if(state == PlayerState.STATE.CHURCHMINIGAME)
+        {
+            
+        }
     }
 
     void FixedUpdate()
     {
-        Move();
+        if (moveToRoutine == null)
+        {
+            Move();
+        }
+        
         RaycastHit2D hitYUp = Physics2D.Raycast(transform.position, transform.up, rollDistance);
         if (hitYUp)
         {
@@ -150,10 +159,11 @@ public class PlayerMovement : MonoBehaviour
                 StartCoroutine(DodgeCoroutine());
                 timeSinceLastRolled = Time.fixedTime;
             }
-            else if (Input.GetKeyDown("w"))
+            else if (keyPress.Equals("w"))
             {
                 // Jump
-                print("W down");
+                print("W key process");
+                MoveTo(new Vector2(0, 0), 2f);
             }
             else if (keyPress.Equals("e"))
             {
@@ -164,12 +174,24 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
+    public void MoveTo(Vector3 coords, float time)
+    {
+        if(moveToRoutine == null)
+        {
+            moveToRoutine = StartCoroutine(MoveToCoroutine(coords, time));
+        }
+        else
+        {
+            Debug.Log("moveToRoutine still running!");
+        }
+    }
+
     private void OnCollisionEnter2D(Collision2D collision)
     {
         Debug.Log("oncollisionenter2d: " + collision.gameObject.name);
-        SceneMinigame minigame = collision.gameObject.GetComponent<SceneMinigame>();
-        if (minigame != null) {
-            minigame.load(sceneController);
+        SceneTransport transport = collision.gameObject.GetComponent<SceneTransport>();
+        if (transport != null) {
+            transport.load(sceneController);
         }
     }
 
@@ -229,6 +251,36 @@ public class PlayerMovement : MonoBehaviour
         currMoveSpeed = Mathf.Clamp(currMoveSpeed + rollingMoveSpeed, minMoveSpeed, maxMoveSpeed);
         yield return endOfFrame;
 
+    }
+
+    private IEnumerator MoveToCoroutine(Vector3 coords, float time)
+    {
+        var endOfFrame = new WaitForEndOfFrame();
+        Debug.Log(coords);
+        Vector3 playerPosition = gameObject.transform.position;
+        if(coords.x < playerPosition.x)
+        {
+            movement = new Vector2(-1, 0);
+        }
+        else
+        {
+            movement = new Vector2(1, 0);
+        }
+        
+        iTween.MoveTo(gameObject, iTween.Hash("position", coords, "time", time, "oncomplete", "onMoveToComplete", "easeType", "easeInCubic"));
+        yield return endOfFrame;
+    }
+
+    private void onMoveToComplete()
+    {
+        movement = Vector2.zero;
+        moveToRoutine = null;
+        Debug.Log("onMoveToComplete");
+    }
+
+    public bool isMoveToOn()
+    {
+        return moveToRoutine != null ? true : false;
     }
 }
 

@@ -18,7 +18,7 @@ public class PlayerState : MonoBehaviour
 
     public enum STATE
     {
-        NORMAL, INTERACTING, STOP
+        NORMAL, INTERACTING, STOP, CHURCHMINIGAME
     }
 
     public void setNormal()
@@ -34,6 +34,11 @@ public class PlayerState : MonoBehaviour
     public void setStop()
     {
         playerState = STATE.STOP;
+    }
+
+    public void setChurchMinigame()
+    {
+        playerState = STATE.CHURCHMINIGAME;
     }
 
     public STATE getPlayerState()
