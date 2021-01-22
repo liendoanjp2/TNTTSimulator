@@ -9,20 +9,26 @@ public class NPC : MonoBehaviour, Interactable
     public GameObject actualSign;
     public string signText;
     private bool intereacted = false;
+    private bool isTyping = false;
 
     private void OnCollisionExit2D(Collision2D collision)
     {
         actualSign.SetActive(false);
         intereacted = false;
+        textObject.GetComponent<TMPro.TextMeshProUGUI>().text = "";
     }
 
     public void Interact(GameObject player)
     {
+        textObject.GetComponent<TMPro.TextMeshProUGUI>().text += "";
         if (!intereacted)
         {
             actualSign.SetActive(true);
             intereacted = true;
-            StartCoroutine(TypeText(signText));
+            if (!isTyping)
+            {
+                StartCoroutine(TypeText(signText));
+            }
         }
         else
         {
@@ -34,6 +40,7 @@ public class NPC : MonoBehaviour, Interactable
 
     IEnumerator TypeText(string text)
     {
+        isTyping = true;
         textObject.GetComponent<TMPro.TextMeshProUGUI>().text = "";
         foreach(char letter in text.ToCharArray())
         {
@@ -49,6 +56,7 @@ public class NPC : MonoBehaviour, Interactable
             Thread.Sleep(20);
             yield return null;
         }
+        isTyping = false;
     }
 
     public void onAnimationEnd()

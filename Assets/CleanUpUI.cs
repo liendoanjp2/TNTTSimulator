@@ -44,6 +44,11 @@ public class CleanUpUI : MonoBehaviour
         numberOfTrashPickedUp = 0;
     }
 
+    public int getNumberOfTrashPickedUp()
+    {
+        return numberOfTrashPickedUp;
+    }
+
     // Start is called before the first frame update
     void Start()
     {

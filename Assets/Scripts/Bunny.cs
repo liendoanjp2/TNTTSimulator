@@ -16,7 +16,7 @@ public class Bunny : MonoBehaviour, Interactable
     // Start is called before the first frame update
     void Start()
     {
-        randomSpot = Random.Range(0, moveSpots.Length -1);
+        randomSpot = Random.Range(0, moveSpots.Length);
 
     }
 
@@ -30,7 +30,7 @@ public class Bunny : MonoBehaviour, Interactable
             if(waitTime <= 0)
             {
                 gameObject.GetComponent<Animator>().Play("BunnyAnimation");
-                randomSpot = Random.Range(0, moveSpots.Length - 1);
+                randomSpot = Random.Range(0, moveSpots.Length);
 
                 waitTime = startWaitTime;
                 if (transform.position.x > moveSpots[randomSpot].position.x)

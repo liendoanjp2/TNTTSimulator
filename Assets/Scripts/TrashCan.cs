@@ -9,7 +9,8 @@ public class TrashCan : MonoBehaviour, Interactable
 
     public void Interact(GameObject player)
     {
-        float amountOfExp = expApostolicWork.GetComponent<ExpBar>().getMaxExp() / 5;
+        
+        float amountOfExp = expApostolicWork.GetComponent<ExpBar>().getMaxExp() / 15 * gameUI.GetComponent<CleanUpUI>().getNumberOfTrashPickedUp();
         expApostolicWork.GetComponent<ExpBar>().addExp(amountOfExp);
         gameUI.GetComponent<CleanUpUI>().dumpTrash();
     }
