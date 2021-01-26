@@ -8,18 +8,42 @@ public class ChurchMinigame : MonoBehaviour
     Button answer1;
     Button answer2; 
     Button answer3;
+    Button answer4;
+    GameObject minigamePanel;
 
     GameObject stairs;
     List<string> kinh = new List<string>();
     List<string> completedKinh = new List<string>();
+
+    Vector3 bottomStepLocation = new Vector3(-13.5f, 6.5f, -18.75f);
+
     // Start is called before the first frame update
     void Start()
     {
-        answer1 = gameObject.transform.Find("Panel").Find("Answer1").GetComponent<Button>();
-        answer2 = gameObject.transform.Find("Panel").Find("Answer2").GetComponent<Button>();
-        answer3 = gameObject.transform.Find("Panel").Find("Answer3").GetComponent<Button>();
-        stairs = GameObject.Find("Stairs");
+        // Save minigamepanel
+        minigamePanel = gameObject.transform.Find("MinigamePanel").gameObject;
+        // Move the minigamepanel down
+        float rectHeight = minigamePanel.GetComponent<RectTransform>().rect.height;
+        minigamePanel.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -rectHeight);
+        Debug.Log(minigamePanel.GetComponent<RectTransform>().anchoredPosition);
 
+        // main panel contains title, question, answer
+        GameObject mainPanel = minigamePanel.transform.Find("MainPanel").gameObject;
+
+        // answer panel contains answers
+        GameObject answerPanel = mainPanel.transform.Find("AnswerPanel").gameObject;
+        GameObject leftAnswerPanel = answerPanel.transform.Find("InnerTextPanel").Find("LeftPanel").gameObject;
+        GameObject rightAnswerPanel = answerPanel.transform.Find("InnerTextPanel").Find("RightPanel").gameObject;
+
+        // Get references to the buttons
+        answer1 = leftAnswerPanel.transform.Find("Answer1").GetComponent<Button>();
+        answer2 = rightAnswerPanel.transform.Find("Answer2").GetComponent<Button>();
+        answer3 = leftAnswerPanel.transform.Find("Answer3").GetComponent<Button>();
+        answer4 = rightAnswerPanel.transform.Find("Answer4").GetComponent<Button>();
+
+
+        // Get stairs in the scene
+        stairs = GameObject.Find("Stairs");
 
         // Level 1 --> phrases delimit by /,*.*/
         // Level 2 --> delimit by / *.*,*/ to get words. Do every couple words as the level increase
@@ -32,6 +56,20 @@ public class ChurchMinigame : MonoBehaviour
         kinh.Add("và tha nợ chúng con như chúng con cũng tha kẻ có nợ chúng con.");
         kinh.Add("Xin chớ để chúng con sa chước cám dỗ,");
         kinh.Add("nhưng cứu chúng con cho khỏi mọi sự dữ.Amen.");
+    }
+
+    public void UpdatePanelPosition(Vector2 newPosition)
+    {
+        /*        RectTransform rectTransform = panelToMove.GetComponent<RectTransform>();
+                rectTransform.anchoredPosition = newPosition;*/
+        Debug.Log("im moving" + newPosition);
+        //panel.GetComponent<RectTransform>().anchoredPosition = position;
+    }
+
+
+    private void Awake()
+    {
+        
     }
 
     // Update is called once per frame
@@ -64,21 +102,25 @@ public class ChurchMinigame : MonoBehaviour
         Camera playerCam = player.transform.Find("Camera").GetComponent<Camera>();
         CameraMovement cameraMovement = playerCam.GetComponent<CameraMovement>();
         PlayerMovement playerMovement = character.GetComponent<PlayerMovement>();
+        GameObject playerUI = player.transform.Find("PlayerUI").gameObject;
+        PlayerUIAnimator playerUIAnimator = playerUI.GetComponent<PlayerUIAnimator>();
+
+        playerCam.GetComponent<CameraMovement>().MoveTo(bottomStepLocation, 2f);
         playerMovement.movement = new Vector2(1, 0);
 
-        // Character walk in to bottom step then zoom out
+        // Character walk in to bottom step and zoom out
         Transform baseStairsTransform = stairs.transform.Find("Bottom");
         Debug.Log("Player: " + gameObject.transform.position + "| " + baseStairsTransform.position);
         playerMovement.MoveTo(baseStairsTransform.position, 2f);
 
-        while (playerMovement.isMoveToOn())
+        while (playerMovement.isMoveToOn() || cameraMovement.isMoveToOn())
         {
             yield return null;
         }
 
-        playerCam.GetComponent<CameraMovement>().MoveTo(new Vector3(-13.5f, 6.5f, -18.75f), 2f);
+        playerUIAnimator.showPanelSlideUp(minigamePanel);
 
-        while (cameraMovement.isMoveToOn())
+        while (playerUIAnimator.isPlaying())
         {
             yield return null;
         }
@@ -92,3 +134,4 @@ public class ChurchMinigame : MonoBehaviour
 
     }
 }
+

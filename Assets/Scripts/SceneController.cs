@@ -149,9 +149,13 @@ public class SceneController : MonoBehaviour
         Debug.Log("running!");
         PlayerState playerState = gameObject.GetComponent<PlayerState>();
         Color objectColor = sceneTransition.GetComponent<Image>().color;
+        GameObject player = GameObject.Find("Player");
+        PlayerUI playerUI = player.transform.Find("PlayerUI").GetComponent<PlayerUI>();
         if (sceneName.Equals(MainSceneName))
         {
             Debug.Log("Running code for main scene");
+            playerUI.showAllRequiredPlayerUI();
+
         }
         else if (sceneName.Equals(ChurchSceneMinigameName))
         {
@@ -171,11 +175,9 @@ public class SceneController : MonoBehaviour
             }
             else
             {
-                // Disable player camera + player ui
-                GameObject player = GameObject.Find("Player");
-                player.transform.Find("PlayerUI").gameObject.SetActive(false);
+                // Hide everything except scenetransition
+                playerUI.hideAllExceptSceneTransition();
 
-                
                 // TODO FADE Into the new SCENE
                 while (sceneTransition.GetComponent<Image>().color.a > 0)
                 {
