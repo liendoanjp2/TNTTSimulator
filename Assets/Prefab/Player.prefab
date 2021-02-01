@@ -1811,8 +1811,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c76f439407444104391fe6a02c3f7c17, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  runningMoveSpeed: 4.5
+  runningMoveSpeed: 5.5
   currMoveSpeed: 2
+  msAccelerationMin: 10
+  msAccelerationCurr: 10
+  msAccelerationMax: 20
   directionFacing: 1
   movement: {x: 0, y: 0}
 --- !u!114 &1981841487877486311

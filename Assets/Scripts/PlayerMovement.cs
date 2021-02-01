@@ -5,18 +5,27 @@ using UnityEngine;
 public class PlayerMovement : MonoBehaviour
 {
     // Constants
-    private float minMoveSpeed = 2f;
-    private float maxMoveSpeed = 6f;
-    public float runningMoveSpeed = 4.5f;
-
     private const float leftDirection = -1f;
     private const float rightDirection = 1f;
 
-    // Direction + movespeed + movement
-    public float currMoveSpeed = 2f;
-    public float directionFacing = rightDirection;
+    // movement
+    private float minMoveSpeed = 3f;                 // Minimum movespeed
+    private float maxMoveSpeed = 6f;                 // Maximum movespeed
+    public float runningMoveSpeed = 5.5f;            // Speed at which to display running animation
+    public float currMoveSpeed = 2f;                 // Current movement
+    private float msAccelerationMin = 2f;            // Min acceleration for movement
+    private float msAccelerationCurr = 15f;           // Current acceleration for movement
+    private float msAccelerationMax = 5f;           // Max acceleration for movement
+    private float msAccelerationStartTime = 0;       // Start time of first acceleration
+    private float msAccelerationTime = 1.2f;         // Time to accelerate to msAccelerationMax
+    private float movespeedDeacceleration = 25f;     // deacceleration rate
+    private float timeSinceLastMovement;             // Time since the last movement
+    private float timeToDeaccelerateSpeed = 0.05f;    // Amount of time in seconds to wait until we deaccelerate the player's speed
     public Vector2 movement;
 
+    // Direction
+    public float directionFacing = rightDirection;
+    
     // Keypresses for input
     private List<string> keyPresses = new List<string>();
 
@@ -83,11 +92,12 @@ public class PlayerMovement : MonoBehaviour
         {
             Move();
         }
-        
-        RaycastHit2D hitYUp = Physics2D.Raycast(transform.position, transform.up, rollDistance);
-        if (hitYUp)
+
+        BoxCollider2D boxCollider2D = GetComponent<BoxCollider2D>();
+        RaycastHit2D hit = Physics2D.BoxCast(transform.position, boxCollider2D.size, 0, movement, rollDistance);
+        if (hit)
         {
-            Debug.DrawRay(rigidbody.position, Vector2.up * hitYUp.distance, Color.red);
+            Debug.DrawRay(rigidbody.position, movement * hit.distance, Color.red);
         }
         
     }
@@ -97,15 +107,43 @@ public class PlayerMovement : MonoBehaviour
         float moveX = Input.GetAxisRaw("Horizontal");
         float moveY = Input.GetAxisRaw("Vertical");
 
-        movement = new Vector2(moveX, moveY).normalized; // Fix diagonal speed
+        Vector2 newMovement = new Vector2(moveX, moveY).normalized; // Fix diagonal speed
 
-        if(moveX != 0 || moveY != 0)
+        if(newMovement == Vector2.zero)
         {
-            currMoveSpeed = Mathf.Clamp(currMoveSpeed + Time.deltaTime * 2, minMoveSpeed, maxMoveSpeed);
+            // If we have let go of the controls, we should deaccelerate in that direction
+            // Slowly deaccelerate speed if we havent moved in awhile
+            if (Time.time - timeSinceLastMovement >= timeToDeaccelerateSpeed)
+            {
+                currMoveSpeed = Mathf.Clamp(currMoveSpeed - Time.deltaTime * movespeedDeacceleration, minMoveSpeed, maxMoveSpeed);
+            }
+
+            // If our speed is zero then set our movement to have no movement
+            if(currMoveSpeed == minMoveSpeed)
+            {
+                movement = newMovement;
+            }
         }
         else
         {
-            currMoveSpeed = Mathf.Clamp(currMoveSpeed - Time.deltaTime * 8, minMoveSpeed, maxMoveSpeed);
+            if(movement == Vector2.zero)
+            {
+                // We began to move
+                msAccelerationStartTime = Time.time;
+            }
+
+            // Update to the new movement
+            movement = newMovement;
+
+            // Determine the acceleration step
+            float accelerationTime = (Time.time - msAccelerationStartTime) / msAccelerationTime;
+            msAccelerationCurr = Mathf.SmoothStep(msAccelerationMin, msAccelerationMax, accelerationTime);
+
+            // Update the current move speed
+            currMoveSpeed = Mathf.Clamp(currMoveSpeed + Time.deltaTime * msAccelerationCurr, minMoveSpeed, maxMoveSpeed);
+            
+            // Update the timeSinceLastMovement because we have moved
+            timeSinceLastMovement = Time.time;
         }
 
         if (Input.GetKeyDown("q"))
@@ -205,44 +243,53 @@ public class PlayerMovement : MonoBehaviour
         Vector2 characterBoxDim = boxCollider.size;
         Vector2 distanceAbleToDodge = Vector2.one * rollDistance;
 
-        // Moving left or right, check in front to see how far we can roll
-        if (movement.x != 0)
+        // Remove the sign because we want distance to be nonscalar, these will help us know the distance to dodge.
+        Vector2 absRightDirection = new Vector2(Mathf.Abs(transform.right.x), transform.right.y);
+
+        // If we are moving we will cast raycast in direction of movement
+        if (movement != Vector2.zero)
         {
-            RaycastHit2D hitX = Physics2D.Raycast(transform.position, transform.right, rollDistance);
-            if (hitX && hitX.collider != null && !hitX.collider.isTrigger)
+            // Raycast in the direction of movement and see if theres any object infront, then limit our roll
+            RaycastHit2D hit = Physics2D.BoxCast(transform.position, characterBoxDim, 0, movement, rollDistance);
+            if (hit)
             {
-                distanceAbleToDodge.x = hitX.distance - characterBoxDim.x / 2;
+                // Calculate the distance (if we were to go diagonally), remove the x and y component if we arent moving diagonally.
+                distanceAbleToDodge = Vector2.one * hit.distance;
+
+                if (movement.x == 0)
+                {
+                    // Not moving in x direction, so we assume we are not to dodge in the x direction
+                    distanceAbleToDodge.x = 0;
+                }
+                if(movement.y == 0)
+                {
+                    // Not moving in y direction, so we assume we are not to dodge in the x direction
+                    distanceAbleToDodge.y = 0;
+                }
             }
         }
-        // Moving up, check above to see how far we can roll
-        if (movement.y > 0)
+        else
         {
-            RaycastHit2D hitYUp = Physics2D.Raycast(transform.position, transform.up, rollDistance);
-            if (hitYUp && hitYUp.collider != null && !hitYUp.collider.isTrigger)
+            // Otherwise we cast raycast in direction we are facing
+            RaycastHit2D hit = Physics2D.BoxCast(transform.position, characterBoxDim, 0, transform.right, rollDistance);
+            if (hit)
             {
-                distanceAbleToDodge.y = hitYUp.distance - characterBoxDim.y / 2;
+                // Remove the sign because we want distance to be nonscalar
+                distanceAbleToDodge = absRightDirection * hit.distance;
             }
         }
-        // Moving down, check below to see how far we can roll
-        else if (movement.y < 0)
-        {
-            RaycastHit2D hitYDown = Physics2D.Raycast(transform.position, -transform.up, rollDistance);
-            if (hitYDown && hitYDown.collider != null && !hitYDown.collider.isTrigger)
-            {
-                distanceAbleToDodge.y = hitYDown.distance - characterBoxDim.y / 2;
-            }
-        }
+
 
         Debug.Log(distanceAbleToDodge);
 
-        Vector3 dodgePosition = rigidbody.position + movement.normalized * distanceAbleToDodge;
+        Vector3 dodgePosition = rigidbody.position + movement * distanceAbleToDodge;
 
         if (movement == Vector2.zero)
         {
             dodgePosition = transform.position + transform.right.normalized * distanceAbleToDodge.x;
         }
 
-        print(distanceAbleToDodge + "" + dodgePosition);
+        print(distanceAbleToDodge + "|" + dodgePosition);
 
         animationController.playRoll();
         iTween.MoveTo(gameObject, iTween.Hash("position", dodgePosition, "time", 0.2f, "easeType", "easeInOutExpo", "oncomplete", "onDodgeComplete"));
@@ -282,6 +329,8 @@ public class PlayerMovement : MonoBehaviour
     {
         return moveToRoutine != null ? true : false;
     }
+
+
 }
 
 
