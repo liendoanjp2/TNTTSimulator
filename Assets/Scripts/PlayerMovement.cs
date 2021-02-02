@@ -13,7 +13,7 @@ public class PlayerMovement : MonoBehaviour
     private float maxMoveSpeed = 6f;                 // Maximum movespeed
     public float runningMoveSpeed = 5.5f;            // Speed at which to display running animation
     public float currMoveSpeed = 2f;                 // Current movement
-    private float msAccelerationMin = 2f;            // Min acceleration for movement
+    private float msAccelerationMin = 4f;            // Min acceleration for movement
     private float msAccelerationCurr = 15f;           // Current acceleration for movement
     private float msAccelerationMax = 5f;           // Max acceleration for movement
     private float msAccelerationStartTime = 0;       // Start time of first acceleration
