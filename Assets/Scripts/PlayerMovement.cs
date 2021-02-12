@@ -93,6 +93,20 @@ public class PlayerMovement : MonoBehaviour
             Move();
         }
 
+        // Handle direction of player
+        if (directionFacing == rightDirection && movement.x < 0)
+        {
+            // Turn left
+            transform.rotation = transform.rotation * Quaternion.Euler(0, 180f, 0);
+            directionFacing = leftDirection;
+        }
+        else if (directionFacing == leftDirection && movement.x > 0)
+        {
+            // Turn right
+            transform.rotation = transform.rotation * Quaternion.Euler(0, -180f, 0);
+            directionFacing = rightDirection;
+        }
+
         BoxCollider2D boxCollider2D = GetComponent<BoxCollider2D>();
         RaycastHit2D hit = Physics2D.BoxCast(transform.position, boxCollider2D.size, 0, movement, rollDistance);
         if (hit)
@@ -169,19 +183,6 @@ public class PlayerMovement : MonoBehaviour
 
     void Move()
     {
-        if (directionFacing == rightDirection && movement.x < 0)
-        {
-            // Turn left
-            transform.rotation = transform.rotation * Quaternion.Euler(0, 180f, 0);
-            directionFacing = leftDirection;
-        }
-        else if (directionFacing == leftDirection && movement.x > 0)
-        {
-            // Turn right
-            transform.rotation = transform.rotation * Quaternion.Euler(0, -180f, 0);
-            directionFacing = rightDirection;
-        }
-
         Vector2 baseMovement = (rigidbody.position + movement * currMoveSpeed * Time.fixedDeltaTime);
 
         // Movement
@@ -214,14 +215,7 @@ public class PlayerMovement : MonoBehaviour
 
     public void MoveTo(Vector3 coords, float time)
     {
-        if(moveToRoutine == null)
-        {
-            moveToRoutine = StartCoroutine(MoveToCoroutine(coords, time));
-        }
-        else
-        {
-            Debug.Log("moveToRoutine still running!");
-        }
+        moveToRoutine = StartCoroutine(MoveToCoroutine(coords, time));
     }
 
     private void OnCollisionEnter2D(Collision2D collision)

@@ -362,11 +362,30 @@ public class ChurchMinigame : MonoBehaviour
         {
             string buttonText = button.transform.Find("Text").GetComponent<Text>().text;
             completedKinhContent.Add(buttonText);
+
+            // Get top floor of stairs position and map amount of kinhs to the vertical distance
+            Vector3 topStairPosition = stairs.transform.Find("Top").position;
+            // Get bottom floor
+            Vector3 botStairPosition = stairs.transform.Find("Bottom").position;
+
+            float contentRatio = correctKinh.getContentCompletedRatio();
+
+            // Lerp vertical distance
+            float stairPositionY = Mathf.Lerp(botStairPosition.y, topStairPosition.y, contentRatio);
+
+            // Randomize horizontal distance, +- 1 unit?
+            float randomX = Random.Range(botStairPosition.x - 1, botStairPosition.x + 1);
+
+            // Add movement for player here
+            playerMovement.MoveTo(new Vector3(randomX, stairPositionY, 0), 1f);
+
             minigameIteration();
         }
+        else
+        {
+            // Mark answer wrong and not clickable
+        }
             Debug.Log(button);
-        // If correct answer
-        // do minigameIteration();
     }
 
     private void gameHasEnded()
@@ -410,6 +429,11 @@ public class ChurchMinigame : MonoBehaviour
             // Prevent getting randomly the last word cause its usually "Amen"
             int randomIndex = Random.Range(0, this.Content.Length - 1);
             return this.Content[randomIndex];
+        }
+
+        public float getContentCompletedRatio()
+        {
+            return ((float)ContentIndex) / Content.Length;
         }
 
         public void resetContentIndex()
