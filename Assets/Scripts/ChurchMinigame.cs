@@ -1,6 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
+using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -18,22 +18,24 @@ public class ChurchMinigame : MonoBehaviour
     Text kinhTitle;
     Text kinhText;
 
-    Button correctAnswerButton;
-    List<Button> wrongAnswerButtonList = new List<Button>();
-    Kinh correctKinh;
-    List<Kinh> wrongKinhList = new List<Kinh>();
+    int difficultyLevel = 1;                                 // Difficulty level of the kinh to choose from
+    Button correctAnswerButton;                              // Button in which the answer should be
+    Kinh correctKinh;                                        // Kinh being used for the answer
+    List<Button> wrongAnswerButtonList = new List<Button>(); // List of buttons for the wrong answers
+    List<Kinh> wrongKinhList = new List<Kinh>();             // List of kinhs for the wrong answers
 
     string disableClickPanelName = "DisableClickPanel";
     string fillInTheBlankString = "________";
 
-    GameObject stairs;
-    List<string> completedKinhContent = new List<string>();
+    List<string> completedKinhContent = new List<string>();   // List of sentences of the kinh answered correctly
+    // Data structure of kinhs, it will be indexed by key value pair: (kinhLevel, listOfKinhsWithThatLevel)
     Dictionary<int, List<Kinh>> kinhs = new Dictionary<int, List<Kinh>>();
-    List<string> allKinhNames;
-    int numKinhLevels = 4;
+    int numKinhLevels = 4;                                    // The amount of levels of the kinh (1 to 4, 4 being difficult)
 
+    // Location for camera to move to on initial load
+    Vector3 cameraLocationForStairs = new Vector3(-13.5f, 6.5f, -18.75f);
 
-    Vector3 bottomStepLocation = new Vector3(-13.5f, 6.5f, -18.75f);
+    GameObject stairs;
 
     GameObject player;
     Transform character;
@@ -86,15 +88,15 @@ public class ChurchMinigame : MonoBehaviour
         // Get stairs in the scene
         stairs = GameObject.Find("Stairs");
 
-
         // Populate kinh from file
         hardcodedKinhs();
+        loadKinhFromFile();
 
     }
 
     private void Awake()
     {
-        
+
     }
 
     // Update is called once per frame
@@ -119,16 +121,6 @@ public class ChurchMinigame : MonoBehaviour
     public void run()
     {
         StartCoroutine(runSetupCoroutine());
-
-        // Tell script to run?
-        // Select random kinh...
-
-        // Assign text to buttons from kinh.
-        // onClickHandler --> Check if kinh is correct, if not then we mark it red
-        // If it is good, we then 1.) move the player, 2.) add it to the completedKinhContent, 3.) assign text to buttons with new line
-
-
-        // Then loop thru the prayers
     }
 
     private IEnumerator runSetupCoroutine()
@@ -136,7 +128,7 @@ public class ChurchMinigame : MonoBehaviour
         // Initialize references to player components/gameobjects
         initializePlayerRefs();
 
-        playerCam.GetComponent<CameraMovement>().MoveTo(bottomStepLocation, 2f);
+        playerCam.GetComponent<CameraMovement>().MoveTo(cameraLocationForStairs, 2f);
 
         // Character walk in to bottom step and zoom out
         Transform baseStairsTransform = stairs.transform.Find("Bottom");
@@ -174,10 +166,9 @@ public class ChurchMinigame : MonoBehaviour
         }
 
         // Generate random kinh at difficulty 0 and set global
-        chooseRandomKinh(0);
+        chooseRandomKinh(difficultyLevel);
 
         // From here on loop this...
-
         // Do minigame iteration
         minigameIteration();
 
@@ -190,36 +181,67 @@ public class ChurchMinigame : MonoBehaviour
         }
     }
 
+    /* Chooses a random kinh and assigns it globally to correctKinh */
+    private void chooseRandomKinh(int difficulty)
+    {
+        // Get kinhlist
+        List<Kinh> kinhList = kinhs[difficulty];
+
+        // Gets random kinh
+        int randomIndex = Random.Range(0, kinhList.Count);
+
+        correctKinh = kinhList[randomIndex];
+    }
+
+
+    private void loadKinhFromFile()
+    {
+        string file_path = Application.streamingAssetsPath + "/KinhFiles/test";
+        StreamReader input_stream = new StreamReader(file_path);
+        string fileContents = input_stream.ReadToEnd();
+
+        print(fileContents);
+
+        // Get kinh list from json
+        KinhListModel kinhListModel = JsonUtility.FromJson<KinhListModel>(fileContents);
+
+        // Close to cleanup
+        input_stream.Close();
+
+        // Parse kinh list into our data structure
+        // TODO!!!!
+    }
+
     // TO REMOVE!!!
     private void hardcodedKinhs()
     {
         string kinhName = "Kinh Lạy Cha";
-        string kinhContentString = "Lạy Cha chúng con ở trên trời,chúng con nguyện danh Cha cả sáng, " +
-                                    "nước Cha trị đến,ý Cha thể hiện dưới đất cũng như trên trời. " +
+        string kinhContentString = "Lạy Cha chúng con ở trên trời, chúng con nguyện danh Cha cả sáng, " +
+                                    "nước Cha trị đến, ý Cha thể hiện dưới đất cũng như trên trời. " +
                                     "Xin Cha cho chúng con hôm nay lương thực hằng ngày, " +
                                     "và tha nợ chúng con như chúng con cũng tha kẻ có nợ chúng con. " +
                                     "Xin chớ để chúng con sa chước cám dỗ, " +
                                     "nhưng cứu chúng con cho khỏi sự dữ. Amen.";
 
-        populateKinh(kinhName, kinhContentString, 0);
+        populateKinh(kinhName, kinhContentString, 1);
 
         kinhName = "Kinh Kính Mừng";
         kinhContentString = "Kính mừng Maria đầy ơn phúc Đức Chúa Trời ở cùng Bà, Bà có phúc lạ hơn mọi người nữ, " +
                             "và Giêsu con lòng Bà gồm phúc lạ. Thánh Maria Đức Mẹ Chúa Trời cầu cho chúng con là " +
                             "kẻ có tội khi này và trong giờ lâm tử, Amen.";
 
-        populateKinh(kinhName, kinhContentString, 1);
+        populateKinh(kinhName, kinhContentString, 2);
 
         kinhName = "Kinh Sáng Danh";
         kinhContentString = "Sáng danh Đức Chúa Cha và Đức Chúa Con, và Đức Chúa Thánh Thần. Như đã có trước vô " +
                             "cùng và bây giờ và hằng có và đời đời chẳng cùng. Amen.";
 
-        populateKinh(kinhName, kinhContentString, 2);
+        populateKinh(kinhName, kinhContentString, 3);
         kinhName = "Kinh Rước Lễ Thiêng Liêng";
         kinhContentString = "Lạy Chúa Giêsu Thánh Thể. Con yêu mến Chúa. Xin Chúa ngự vào tâm hồn con, " +
                             "và ở lại với con luôn mãi. Amen.";
 
-        populateKinh(kinhName, kinhContentString, 3);
+        populateKinh(kinhName, kinhContentString, 4);
     }
 
     // populate all the kinhs in this function
@@ -249,7 +271,7 @@ public class ChurchMinigame : MonoBehaviour
         // Get the next line of the kinh
         string nextKinhLine = correctKinh.getNextContent();
 
-        // Generate the kinh text for completedKinhContent list
+        // Generate the kinh text for completedKinhContent list to display for user of the completed kinh
         string kinhTextString = "";
         foreach (string kinhLine in completedKinhContent)
         {
@@ -261,6 +283,7 @@ public class ChurchMinigame : MonoBehaviour
         // Set the text of the kinh on the UI
         kinhText.text = kinhTextString;
 
+        // If there is no next kinh, we assume game is over...
         if (nextKinhLine == null)
         {
             // Game has ended!
@@ -274,33 +297,24 @@ public class ChurchMinigame : MonoBehaviour
         // Choose random correct answer button + initialize wrong answer button list and set global
         chooseRandomCorrectAnswerButton();
 
-        // Then set the correct kinh answer to it;
+        // Then set the correct kinh text to the correct answer button we chose
         correctAnswerButton.transform.Find("Text").GetComponent<Text>().text = nextKinhLine;
 
-        // Random wrong answers
+        // Populate the other buttons with random wrong answers using the initialized wrong button list
         assignRandomWrongAnswers();
     }
 
-    /* Chooses a random kinh and assigns it globally to correctKinh */
-    private void chooseRandomKinh(int difficulty)
-    {
-        // Get kinhlist
-        List<Kinh> kinhList = kinhs[difficulty];
 
-        // Gets random kinh
-        int randomIndex = Random.Range(0, kinhList.Count);
-
-        correctKinh = kinhList[randomIndex];
-    }
 
     /* Ensures that chosen random kinh hadn't already been picked + not the correct kinh */
     private Kinh chooseRandomWrongKinh()
     {
         Kinh randomWrongKinh = correctKinh;
+        Kinh wrongKinhExists;
         do
         {
-            // Get random kinh level
-            int randomLevelIndex = Random.Range(0, numKinhLevels);
+            // Get random kinh level, TODO make it so it picks only from the same level as the correct kinh
+            int randomLevelIndex = Random.Range(0, numKinhLevels) + 1;
 
             // Get kinhlist on random difficulty level
             List<Kinh> kinhList = kinhs[randomLevelIndex];
@@ -312,9 +326,10 @@ public class ChurchMinigame : MonoBehaviour
 
             // Check if the random kinh we generated exists in wrong kinhlist
             // If not we add, else we choose again
-            wrongKinhList.Find((kinh) => { return kinh.Name.Equals(randomWrongKinh.Name); });
+            wrongKinhExists = wrongKinhList.Find((kinh) => { return kinh.Name.Equals(randomWrongKinh.Name); });
 
-        } while (randomWrongKinh == correctKinh);
+
+        } while (randomWrongKinh == correctKinh || wrongKinhExists != null);
         
         return randomWrongKinh;
     }
@@ -352,7 +367,7 @@ public class ChurchMinigame : MonoBehaviour
         foreach (Button b in wrongAnswerButtonList)
         {
             Kinh randomWrongKinh = chooseRandomWrongKinh();
-
+            wrongKinhList.Add(randomWrongKinh);
             b.transform.Find("Text").GetComponent<Text>().text = randomWrongKinh.getRandomContent();
         }
     }
@@ -368,6 +383,7 @@ public class ChurchMinigame : MonoBehaviour
             // Get bottom floor
             Vector3 botStairPosition = stairs.transform.Find("Bottom").position;
 
+            // Ratio completed of the content
             float contentRatio = correctKinh.getContentCompletedRatio();
 
             // Lerp vertical distance
@@ -379,11 +395,17 @@ public class ChurchMinigame : MonoBehaviour
             // Add movement for player here
             playerMovement.MoveTo(new Vector3(randomX, stairPositionY, 0), 1f);
 
+            // Reset all buttons
+            resetButtons();
+
+            // Continue with game
             minigameIteration();
         }
         else
         {
             // Mark answer wrong and not clickable
+            onWrongAnswerClick(button);
+            
         }
             Debug.Log(button);
     }
@@ -391,13 +413,32 @@ public class ChurchMinigame : MonoBehaviour
     private void gameHasEnded()
     {
         // Handle game ended
-        // Replayability!
+        // Replayability!?
         correctKinh.resetContentIndex();
 
         minigameDisableClickPanel.SetActive(true);
         Debug.Log("Game has ended");
 
         // Show winner screen, maybe play again?
+    }
+
+    private void onWrongAnswerClick(Button button)
+    {
+        // Disable button
+        button.interactable = false;
+
+        // Change normal color, can move to gamescene...
+        ColorBlock buttonCB = button.colors;
+        buttonCB.disabledColor = new Color(255, 100, 100, 210);
+        
+    }
+
+    private void resetButtons()
+    {
+        answer1.interactable = true;
+        answer2.interactable = true;
+        answer3.interactable = true;
+        answer4.interactable = true;
     }
 
     private class Kinh
