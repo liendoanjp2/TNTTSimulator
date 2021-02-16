@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -11,9 +12,8 @@ public class ChurchMinigame : MonoBehaviour
     Button answer3;
     Button answer4;
     GameObject minigamePanel;
-    GameObject minigameDisableClickPanel;
     GameObject startMenuPanel;
-    GameObject startMenuDisableClickPanel;
+    GameObject disableClickPanel;
 
     Text kinhTitle;
     Text kinhText;
@@ -24,7 +24,7 @@ public class ChurchMinigame : MonoBehaviour
     List<Button> wrongAnswerButtonList = new List<Button>(); // List of buttons for the wrong answers
     List<Kinh> wrongKinhList = new List<Kinh>();             // List of kinhs for the wrong answers
 
-    string disableClickPanelName = "DisableClickPanel";
+    string KinhListJsonFileNamePath = Application.streamingAssetsPath + "/KinhFiles/kinh.json";
     string fillInTheBlankString = "________";
 
     List<string> completedKinhContent = new List<string>();   // List of sentences of the kinh answered correctly
@@ -35,6 +35,8 @@ public class ChurchMinigame : MonoBehaviour
     // Location for camera to move to on initial load
     Vector3 cameraLocationForStairs = new Vector3(-13.5f, 6.5f, -18.75f);
 
+    bool gameEnded = false;
+
     GameObject stairs;
 
     GameObject player;
@@ -44,26 +46,21 @@ public class ChurchMinigame : MonoBehaviour
     PlayerMovement playerMovement;
     GameObject playerUI;
     PlayerUIAnimator playerUIAnimator;
+    SceneController playerSceneController;
 
     // Start is called before the first frame update
     void Start()
     {
-        // Save minigamepanel
+        // Save minigamepanel and disable it
         minigamePanel = gameObject.transform.Find("MinigamePanel").gameObject;
-        // Move the minigamepanel down
-        float rectHeight = minigamePanel.GetComponent<RectTransform>().rect.height;
-        minigamePanel.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -rectHeight);
+        minigamePanel.SetActive(false);
 
-        // save startmenupanel
+        // save startmenupanel and disable it
         startMenuPanel = gameObject.transform.Find("StartMenuPanel").gameObject;
-        // Move the startmenupanel down
-        rectHeight = startMenuPanel.GetComponent<RectTransform>().rect.height;
-        startMenuPanel.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -rectHeight);
+        startMenuPanel.SetActive(false);
 
-        // Get disable click panels
-        minigameDisableClickPanel = minigamePanel.transform.Find(disableClickPanelName).gameObject;
-        startMenuDisableClickPanel = startMenuPanel.transform.Find(disableClickPanelName).gameObject;
-
+        // Get disable click panel
+        disableClickPanel = gameObject.transform.Find("DisableClickPanel").gameObject;
 
         // main panel contains title, question, answer
         GameObject mainPanel = minigamePanel.transform.Find("MainPanel").gameObject;
@@ -89,7 +86,6 @@ public class ChurchMinigame : MonoBehaviour
         stairs = GameObject.Find("Stairs");
 
         // Populate kinh from file
-        hardcodedKinhs();
         loadKinhFromFile();
 
     }
@@ -108,13 +104,24 @@ public class ChurchMinigame : MonoBehaviour
 
     private void initializePlayerRefs()
     {
+        // Overall game object + character
         player = GameObject.Find("Player");
         character = player.transform.Find("Character");
+
+        // Camera
         playerCam = player.transform.Find("Camera").GetComponent<Camera>();
         cameraMovement = playerCam.GetComponent<CameraMovement>();
+
+        // Movement
         playerMovement = character.GetComponent<PlayerMovement>();
+
+        // Scene controller
+        playerSceneController = character.GetComponent<SceneController>();
+
+        // UI
         playerUI = player.transform.Find("PlayerUI").gameObject;
         playerUIAnimator = playerUI.GetComponent<PlayerUIAnimator>();
+        
     }
 
     // Player is ready, lets run
@@ -127,6 +134,9 @@ public class ChurchMinigame : MonoBehaviour
     {
         // Initialize references to player components/gameobjects
         initializePlayerRefs();
+
+        // Stop the playercam from following
+        cameraMovement.stopFollowPlayer();
 
         playerCam.GetComponent<CameraMovement>().MoveTo(cameraLocationForStairs, 2f);
 
@@ -141,7 +151,7 @@ public class ChurchMinigame : MonoBehaviour
         }
 
         // Fade in start menu
-        playerUIAnimator.showPanelSlideBottomToTop(startMenuPanel, startMenuDisableClickPanel);
+        playerUIAnimator.showPanelSlideBottomToTop(startMenuPanel, disableClickPanel);
 
         while (playerUIAnimator.isPlaying())
         {
@@ -158,7 +168,7 @@ public class ChurchMinigame : MonoBehaviour
     private IEnumerator startMinigame()
     {
         // Fade out start menu
-        playerUIAnimator.hidePanelSlideUp(startMenuPanel, startMenuDisableClickPanel);
+        playerUIAnimator.hidePanelSlideUp(startMenuPanel, disableClickPanel);
 
         while (playerUIAnimator.isPlaying())
         {
@@ -173,7 +183,7 @@ public class ChurchMinigame : MonoBehaviour
         minigameIteration();
 
         // Slide minigamepanel up
-        playerUIAnimator.showPanelSlideBottomToTop(minigamePanel, minigameDisableClickPanel);
+        playerUIAnimator.showPanelSlideBottomToTop(minigamePanel, disableClickPanel);
 
         while (playerUIAnimator.isPlaying())
         {
@@ -196,11 +206,10 @@ public class ChurchMinigame : MonoBehaviour
 
     private void loadKinhFromFile()
     {
-        string file_path = Application.streamingAssetsPath + "/KinhFiles/test";
-        StreamReader input_stream = new StreamReader(file_path);
+        StreamReader input_stream = new StreamReader(KinhListJsonFileNamePath);
         string fileContents = input_stream.ReadToEnd();
 
-        print(fileContents);
+        //print(fileContents);
 
         // Get kinh list from json
         KinhListModel kinhListModel = JsonUtility.FromJson<KinhListModel>(fileContents);
@@ -209,39 +218,11 @@ public class ChurchMinigame : MonoBehaviour
         input_stream.Close();
 
         // Parse kinh list into our data structure
-        // TODO!!!!
-    }
-
-    // TO REMOVE!!!
-    private void hardcodedKinhs()
-    {
-        string kinhName = "Kinh Lạy Cha";
-        string kinhContentString = "Lạy Cha chúng con ở trên trời, chúng con nguyện danh Cha cả sáng, " +
-                                    "nước Cha trị đến, ý Cha thể hiện dưới đất cũng như trên trời. " +
-                                    "Xin Cha cho chúng con hôm nay lương thực hằng ngày, " +
-                                    "và tha nợ chúng con như chúng con cũng tha kẻ có nợ chúng con. " +
-                                    "Xin chớ để chúng con sa chước cám dỗ, " +
-                                    "nhưng cứu chúng con cho khỏi sự dữ. Amen.";
-
-        populateKinh(kinhName, kinhContentString, 1);
-
-        kinhName = "Kinh Kính Mừng";
-        kinhContentString = "Kính mừng Maria đầy ơn phúc Đức Chúa Trời ở cùng Bà, Bà có phúc lạ hơn mọi người nữ, " +
-                            "và Giêsu con lòng Bà gồm phúc lạ. Thánh Maria Đức Mẹ Chúa Trời cầu cho chúng con là " +
-                            "kẻ có tội khi này và trong giờ lâm tử, Amen.";
-
-        populateKinh(kinhName, kinhContentString, 2);
-
-        kinhName = "Kinh Sáng Danh";
-        kinhContentString = "Sáng danh Đức Chúa Cha và Đức Chúa Con, và Đức Chúa Thánh Thần. Như đã có trước vô " +
-                            "cùng và bây giờ và hằng có và đời đời chẳng cùng. Amen.";
-
-        populateKinh(kinhName, kinhContentString, 3);
-        kinhName = "Kinh Rước Lễ Thiêng Liêng";
-        kinhContentString = "Lạy Chúa Giêsu Thánh Thể. Con yêu mến Chúa. Xin Chúa ngự vào tâm hồn con, " +
-                            "và ở lại với con luôn mãi. Amen.";
-
-        populateKinh(kinhName, kinhContentString, 4);
+        // Loop through each kinh model and populate based on name, content, level
+        kinhListModel.KinhList.ForEach((KinhModel kinhModel) =>
+        {
+            populateKinh(kinhModel.Name, kinhModel.Content, kinhModel.Level);
+        });
     }
 
     // populate all the kinhs in this function
@@ -249,9 +230,18 @@ public class ChurchMinigame : MonoBehaviour
     {
         // parse the kinh by sentences/phrases/clauses
         char[] delimiterChars = { ',', '.'};
-        string[] kinhContent = kinhContentString.Split(delimiterChars, System.StringSplitOptions.RemoveEmptyEntries);
+        string[] kinhContent = Regex.Split(kinhContentString, @"(?<=[.,;])");
+        //string[] kinhContent = kinhContentString.Split(delimiterChars, System.StringSplitOptions.RemoveEmptyEntries);
 
-        Kinh kinh = new Kinh(kinhName, kinhContent);
+        // Fix the content, regex.split has empty entry
+        string[] fixedContent = new string[kinhContent.Length - 1];
+        for(int index = 0; index < fixedContent.Length; index++)
+        {
+            fixedContent[index] = kinhContent[index];
+        }
+        
+
+        Kinh kinh = new Kinh(kinhName, fixedContent);
 
         if (!kinhs.ContainsKey(kinhLevel)) {
             // Create list and initialize with our newly created kinh
@@ -373,8 +363,12 @@ public class ChurchMinigame : MonoBehaviour
     }
     public void onClickAnswer(Button button)
     {
+        if (gameEnded)
+            return;
+
         if (button == correctAnswerButton)
         {
+
             string buttonText = button.transform.Find("Text").GetComponent<Text>().text;
             completedKinhContent.Add(buttonText);
 
@@ -395,11 +389,14 @@ public class ChurchMinigame : MonoBehaviour
             // Add movement for player here
             playerMovement.MoveTo(new Vector3(randomX, stairPositionY, 0), 1f);
 
-            // Reset all buttons
-            resetButtons();
-
             // Continue with game
             minigameIteration();
+
+            if (!gameEnded)
+            {
+                // Reset all buttons only if game hasnt ended
+                resetButtons();
+            }
         }
         else
         {
@@ -412,14 +409,16 @@ public class ChurchMinigame : MonoBehaviour
 
     private void gameHasEnded()
     {
+        gameEnded = true;
         // Handle game ended
         // Replayability!?
-        correctKinh.resetContentIndex();
+        //correctKinh.resetContentIndex();
 
-        minigameDisableClickPanel.SetActive(true);
+        //disableClickPanel.SetActive(true);
         Debug.Log("Game has ended");
 
         // Show winner screen, maybe play again?
+        // Show congratulations then disable the clickpanel so that we could leave
     }
 
     private void onWrongAnswerClick(Button button)
@@ -439,6 +438,50 @@ public class ChurchMinigame : MonoBehaviour
         answer2.interactable = true;
         answer3.interactable = true;
         answer4.interactable = true;
+    }
+
+    // Panel that the leave button is on (minigame/start)
+    public void onLeaveButtonClicked(GameObject panel)
+    {
+        StartCoroutine(onLeaveHelper(panel));
+    }
+
+    private IEnumerator onLeaveHelper(GameObject panel)
+    {
+        // Slide the ui down
+        // Fade out start menu
+        playerUIAnimator.hidePanelSlideDown(panel, disableClickPanel);
+
+        if (gameEnded)
+        {
+            // Get position of character leaving map
+            Vector3 pointOffMap = new Vector3(0, 18, 0);
+
+            // Move character off screen above if game has ended
+            playerMovement.MoveTo(pointOffMap, 1f);
+        }
+        else
+        {
+            // Get position of character leaving map
+            Vector3 pointOffMap = new Vector3(0, -5, 0);
+
+            // Calculate time, 20f is estimate vertical distance
+            float timeRatio = Vector3.Distance(character.position, pointOffMap) / 20f * 5f;
+
+            // Move character off screen below if game hasnt ended
+            playerMovement.MoveTo(pointOffMap, timeRatio);
+        }
+
+        while (playerUIAnimator.isPlaying() || playerMovement.isMoveToOn())
+        {
+            yield return null;
+        }
+
+        // Switch scene
+        SceneController.SceneType sceneType = SceneController.SceneType.MainScene;
+        string sceneName = SceneController.getSceneNameString(sceneType);
+        playerSceneController.loadSceneMinigame(sceneName);
+
     }
 
     private class Kinh

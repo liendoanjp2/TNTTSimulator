@@ -12,6 +12,11 @@ public class SceneController : MonoBehaviour
 
     private Dictionary<string, Vector3> spawnPoints = new Dictionary<string, Vector3>();
 
+    public static string MainSceneName = "Michael_Testing";
+    public static string ChurchSceneMinigameName = "ChurchMinigame";
+
+    private Coroutine sceneSwitching;
+
     public enum SceneType
     {
         MainScene, ChurchSceneMinigame
@@ -30,15 +35,12 @@ public class SceneController : MonoBehaviour
         return null;
     }
 
-    public static string MainSceneName = "Michael_Testing";
-    public static string ChurchSceneMinigameName = "ChurchMinigame";
-
     private void Start()
     {
         // Spawn points for main
         spawnPoints.Add(MainSceneName, new Vector3(0, 0, 0));
         spawnPoints.Add(MainSceneName + "To" + ChurchSceneMinigameName, new Vector3(0, 0, 0)); // Spawnpoint after main to church
-        spawnPoints.Add(ChurchSceneMinigameName + "To" + MainSceneName, new Vector3(-33, 31, 0)); // Spawnpoint after church to main
+        spawnPoints.Add(ChurchSceneMinigameName + "To" + MainSceneName, new Vector3(92, 28, 0)); // Spawnpoint after church to main
         sceneTransition = gameObject.transform.parent.Find("PlayerUI").Find("SceneTransition").gameObject;
 
     }
@@ -55,7 +57,11 @@ public class SceneController : MonoBehaviour
 
     public void loadSceneMinigame(string sceneName)
     {
-        StartCoroutine(loadSceneMinigameCoroutine(sceneName));
+        if(sceneSwitching == null)
+        {
+            sceneSwitching = StartCoroutine(loadSceneMinigameCoroutine(sceneName));
+        }
+        
     }
 
     IEnumerator loadSceneMinigameCoroutine(string sceneName)
@@ -63,6 +69,12 @@ public class SceneController : MonoBehaviour
         // Remove controls from player...
         PlayerState playerState = gameObject.GetComponent<PlayerState>();
         playerState.setStop();
+
+        // Remove camera from player
+        GameObject player = GameObject.Find("Player");
+        Camera playerCam = player.transform.Find("Camera").GetComponent<Camera>();
+        CameraMovement cameraMovement = playerCam.GetComponent<CameraMovement>();
+        cameraMovement.stopFollowPlayer();
 
         AsyncOperation sceneLoading = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Additive);
         sceneLoading.allowSceneActivation = false;
@@ -138,28 +150,43 @@ public class SceneController : MonoBehaviour
             Debug.Log(Time.time - startTime);
         }
 
-        // Restore controls after we done
-        playerState.setNormal();
+        // Allow camera to follow player
+        cameraMovement.startFollowPlayer();
         Debug.Log("restore controls");
         StartCoroutine(run(sceneName));
     }
 
     IEnumerator run(string sceneName)
     {
+        // In this ensure the state is set to the correct one for the players
+        // so that they can move/cannot move depending on the situation
         Debug.Log("running!");
         PlayerState playerState = gameObject.GetComponent<PlayerState>();
         Color objectColor = sceneTransition.GetComponent<Image>().color;
         GameObject player = GameObject.Find("Player");
         PlayerUI playerUI = player.transform.Find("PlayerUI").GetComponent<PlayerUI>();
+
         if (sceneName.Equals(MainSceneName))
         {
-            Debug.Log("Running code for main scene");
             playerUI.showAllRequiredPlayerUI();
 
-        }
+            // TODO FADE TO SCENE
+            while (sceneTransition.GetComponent<Image>().color.a > 0)
+            {
+                Debug.Log("Yello" + objectColor.a);
+                float fadeAmount = Mathf.Max(objectColor.a - (1 * Time.deltaTime), 0);
+
+                objectColor = new Color(objectColor.r, objectColor.g, objectColor.b, fadeAmount);
+                sceneTransition.GetComponent<Image>().color = objectColor;
+                yield return null;
+            }
+
+            playerState.setNormal();
+            Debug.Log("Running code for main scene");
+            
+        } // end of mainscene if statement
         else if (sceneName.Equals(ChurchSceneMinigameName))
         {
-            playerState.setChurchMinigame();
 
             Debug.Log("Running code for church minigame scene");
 
@@ -189,25 +216,14 @@ public class SceneController : MonoBehaviour
                     yield return null;
                 }
 
+                playerState.setChurchMinigame();
                 churchUI.GetComponent<ChurchMinigame>().run();
 
                 Debug.Log("After animation");
             } // End of church ui check
+        } // End of churchsceneminigame if statement
 
-
-
-        }
-
-        // TODO FADE TO SCENE
-        while (sceneTransition.GetComponent<Image>().color.a > 0)
-        {
-            Debug.Log("Yello" + objectColor.a);
-            float fadeAmount = Mathf.Max(objectColor.a - (1 * Time.deltaTime), 0);
-
-            objectColor = new Color(objectColor.r, objectColor.g, objectColor.b, fadeAmount);
-            sceneTransition.GetComponent<Image>().color = objectColor;
-            yield return null;
-        }
+        sceneSwitching = null;
     }
 
 }

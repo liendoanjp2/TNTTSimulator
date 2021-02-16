@@ -296,7 +296,7 @@ GameObject:
   - component: {fileID: 1981841487102176118}
   m_Layer: 0
   m_Name: Camera
-  m_TagString: Untagged
+  m_TagString: MainCamera
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1813,11 +1813,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   runningMoveSpeed: 5.5
   currMoveSpeed: 2
-  msAccelerationMin: 10
-  msAccelerationCurr: 10
-  msAccelerationMax: 20
-  directionFacing: 1
   movement: {x: 0, y: 0}
+  directionFacing: 1
 --- !u!114 &1981841487877486311
 MonoBehaviour:
   m_ObjectHideFlags: 0
