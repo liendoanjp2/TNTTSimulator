@@ -1,0 +1,36 @@
+{
+    "ConvoList": [
+        {
+            "ConvoId": 1,
+            "ConvoText": "Con oi!\n\nPlease Hy Sinh and plant some carrots for us in the Garden.\n\nLove you con."
+        } ,
+        {
+            "ConvoId": 2,
+            "ConvoText": "Hello!\nMy name is Tr. Joseph!\n\nYou can move with the arrow keys, roll with \"Q\", and interact with \"E\"!"
+        } ,         
+        {
+            "ConvoId": 3,
+            "ConvoText": "Hello!\nMy name is Chi Mary!\nRemember to live the TNTT mottos:\nPrayer, Eucharist. Sacrifice, and Apostolic Work!\nOnly then will you recieve your next Khanh!"
+        } , 
+        {
+            "ConvoId": 4,
+            "ConvoText": "I can't wait for Sinh Hoat next weekend!\n\nWhat is your favorite TNTT song?"
+        } , 
+        {
+            "ConvoId": 5,
+            "ConvoText": "The garden has been doing amazing!\n\nGLORY TO GOD!"
+        } ,
+        {
+            "ConvoId": 6,
+            "ConvoText": "Such a nice day to serve the the Lord!"
+        } , 
+        {
+            "ConvoId": 7,
+            "ConvoText": "Hello! How are you?"
+        } ,
+        {
+            "ConvoId": 8,
+            "ConvoText": "Such a messy Sinh Hoat!\n\nThere is paper everywhere!"
+        } 
+    ]
+}
